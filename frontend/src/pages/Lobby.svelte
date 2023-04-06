@@ -2,11 +2,17 @@
     import UserList from "../widgets/UserList.svelte";
     import JoinForm from "../forms/JoinForm.svelte";
 
-    import { io } from 'socket.io-client';
+    import { onMount } from 'svelte';
+    import io from 'socket.io-client';
 
-    export const socket = io('http://localhost:8080'); // TODO: replace with URL to backend (environment variable)
-    export let showForm = true; 
+    export let socket;
 
+    onMount(() => {
+        // Connect to the Socket.io endpoint on the backend
+        socket = io('http://localhost:3000');
+    });
+
+    export let showForm = true;
     export function handleSubmit(e) {
         e.preventDefault();
         const name = e.target.elements.name.value;
