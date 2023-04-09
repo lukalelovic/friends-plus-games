@@ -4,6 +4,7 @@
 
     import { onMount } from 'svelte';
     import io from 'socket.io-client';
+    import Navbar from "../generic/Navbar.svelte";
 
     export let socket;
 
@@ -22,10 +23,14 @@
     }
 </script>
 
-<div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    {#if showForm}
-        <JoinForm handleSubmit={handleSubmit} />
-    {:else}
-        <UserList socket={socket} />
-    {/if}
+<div class="min-h-screen flex flex-col">
+    <Navbar />
+    
+    <div class="justify-center py-12 sm:px-6 lg:px-8">
+        {#if showForm}
+            <JoinForm handleSubmit={handleSubmit} />
+        {:else}
+            <UserList socket={socket} />
+        {/if}
+    </div>
 </div>

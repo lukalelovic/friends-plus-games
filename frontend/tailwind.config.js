@@ -4,24 +4,9 @@ export default {
     theme: {
         extend: {
             colors: {
-                primary: {
-                    50: '#fdf7f7',
-                    100: '#fdeeee',
-                    // ... and so on
-                    900: '#3e0c3e',
-                },
-                secondary: {
-                    50: '#faf9f9',
-                    100: '#f5f5f5',
-                    // ... and so on
-                    900: '#3c3c3c',
-                },
-                tertiary: {
-                    50: '#fdfafa',
-                    100: '#faf4f4',
-                    // ... and so on
-                    900: '#2c2c2c',
-                },
+                primary: '#f3ec78',
+                secondary: '#c16f67',
+                tertiary: '#af4261',
             },
             // Add a gradient color
             gradientColorStops: {
