@@ -17,5 +17,9 @@
     "svelte-routing": "^1.6.0",
     "tailwindcss": "^3.3.1",
     "vite": "^4.2.0"
+  },
+  "dependencies": {
+    "pixi.js": "^7.2.4",
+    "svelte-pixi": "^0.1.3"
   }
 }
