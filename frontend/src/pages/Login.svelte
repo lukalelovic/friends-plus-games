@@ -35,7 +35,7 @@
                 bind:value={password} />
         </div>
         <div class="flex flex-col space-y-2">
-            <a class="inline-block align-baseline font-bold text-secondary hover:text-tertiary" href="#">
+            <a class="inline-block align-baseline font-bold text-quaternary hover:text-indigo-500" href="#">
                 Forgot Password?
             </a>
             <div class="text-gray-600">

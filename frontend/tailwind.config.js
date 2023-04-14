@@ -7,6 +7,7 @@ export default {
                 primary: '#f3ec78',
                 secondary: '#c16f67',
                 tertiary: '#af4261',
+                quaternary: '#4f46e5'
             },
             // Add a gradient color
             gradientColorStops: {

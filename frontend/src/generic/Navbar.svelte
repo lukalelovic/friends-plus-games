@@ -6,9 +6,11 @@
     }
 </script>
 
-<nav class="bg-transparent">
+<nav class="bg-transparent border-b-2 border-secondary">
     <div class="container mx-auto px-4 py-2 flex justify-between items-center">
-        <a href="/" class="text-white text-lg font-bold">Games with Friends</a>
+        <a href="/" class="text-white text-lg font-bold">
+            <img class="w-64 m-0 p-2" src="/logo.svg" alt="Games with Friends" />
+        </a>
         <div class="flex items-center">
             <div class="relative">
                 <input
@@ -41,7 +43,7 @@
                     </a>
                 </div>
                 <div class="ml-4">
-                    <a href="/signup" class="hover:text-gray-200 text-white font-bold py-2 px-4 rounded">
+                    <a href="/signup" class="bg-quaternary hover:text-gray-200 text-white font-bold py-2 px-4 rounded">
                         Sign Up
                     </a>
                 </div>
