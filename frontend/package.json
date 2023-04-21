@@ -19,7 +19,7 @@
     "vite": "^4.2.0"
   },
   "dependencies": {
-    "pixi.js": "^7.2.4",
-    "svelte-pixi": "^0.1.3"
+    "konva": "^9.0.1",
+    "pixi.js": "^7.2.4"
   }
 }
