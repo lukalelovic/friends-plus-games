@@ -4,7 +4,7 @@
     import Landing from "./pages/Landing.svelte";
     import Login from "./pages/Login.svelte";
     import Signup from "./pages/Signup.svelte";
-    import Game from "./pages/Game.svelte";
+    import Tag from "./games/Tag.svelte";
 </script>
 
 <Router>
@@ -12,5 +12,5 @@
     <Route path="/login" component={Login}/>
     <Route path="/signup" component={Signup}/>
     <Route path="/lobby" component={Lobby}/>
-    <Route path="/game" component={Game}/>
+    <Route path="/game/tag" component={Tag}/>
 </Router>
