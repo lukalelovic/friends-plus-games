@@ -7,20 +7,32 @@
     const MOVE_OFFSET = 5;
     let keys = {};
 
-    const socket = io("http://localhost:3000");
+    const socket = io("http://localhost:3000/tag-game");
     let players = [];
 
-    socket.on('join', (player) => {
+    socket.on("join", (player) => {
         players.push(player);
     });
 
-    function start(layer) {
+    function start(stage, layer) {
         socket.on("currentState", (state) => {
             // Update the local player list with the latest state from the server
             players = state;
 
             // Remove all existing player shapes from the stage
             layer.destroyChildren();
+
+            // create a new rectangle shape for the background
+            const bg = new Konva.Rect({
+                x: 0,
+                y: 0,
+                width: stage.width(),
+                height: stage.height(),
+                fill: "black",
+            });
+
+            // add the background shape to the layer
+            layer.add(bg);
 
             // Add each player shape to layer
             players.forEach((player) => {
@@ -36,12 +48,12 @@
         });
     }
 
-    function update(layer) {
+    function update(stage, layer) {
         // add event listeners for keydown and keyup events
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("keyup", handleKeyUp);
 
-        checkPlayerMovement();
+        checkPlayerMovement(stage);
     }
 
     function handleKeyDown(event) {
@@ -52,32 +64,34 @@
         keys[event.keyCode] = false;
     }
 
-    function checkPlayerMovement() {
+    function checkPlayerMovement(stage) {
         const player = players.find((p) => p.id === socket.id);
         if (player == undefined) {
             return;
         }
-        
+
         // check if any arrow keys are pressed
-        if (keys[37]) {
+        if (keys[37] && player.x > 0) {
             // left arrow
             player.x = player.x - MOVE_OFFSET;
         }
-        if (keys[38]) {
+        if (keys[38] && player.y > 0) {
             // up arrow
             player.y = player.y - MOVE_OFFSET;
         }
-        if (keys[39]) {
+        if (keys[39] && player.x < stage.width()-100) {
             // right arrow
             player.x = player.x + MOVE_OFFSET;
         }
-        if (keys[40]) {
+        if (keys[40] && player.y < stage.height()-100) {
             // down arrow
             player.y = player.y + MOVE_OFFSET;
         }
 
+        console.log(player.x-100, player.y-100, stage.width(), stage.height());
+
         // Send the new position to the server
-        socket.emit('movePlayer', socket.id, player.x, player.y);
+        socket.emit("movePlayer", socket.id, player.x, player.y);
     }
 
     onDestroy(() => {
@@ -87,4 +101,4 @@
     });
 </script>
 
-<Game background="black" {start} {update} />
+<Game width={1280} height={640} {start} {update} />

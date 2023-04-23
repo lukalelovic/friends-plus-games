@@ -11,6 +11,6 @@
     <Route path="/" component={Landing}/>
     <Route path="/login" component={Login}/>
     <Route path="/signup" component={Signup}/>
-    <Route path="/lobby" component={Lobby}/>
+    <Route path="/lobby/*" component={Lobby}/>
     <Route path="/game/tag" component={Tag}/>
 </Router>

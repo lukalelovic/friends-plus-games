@@ -1,10 +1,11 @@
 <script>
     export let handleSubmit;
+    export let title;
 </script>
 
 <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <div class="text-center">
-        <h2 class="text-4xl font-extrabold text-white">Join Lobby</h2>
+        <h2 class="text-4xl font-extrabold text-white">Join {title} Lobby</h2>
     </div>
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">

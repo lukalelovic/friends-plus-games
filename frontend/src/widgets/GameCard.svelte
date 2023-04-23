@@ -12,7 +12,7 @@
     }
 </style>
 
-<a href="/lobby" class="bg-white card rounded-lg px-2 py-12 h-64 w-1/4 shadow-lg overflow-hidden">
+<a href="lobby/{card.title}/{card.url}" class="bg-white card rounded-lg px-2 py-12 h-64 w-1/4 shadow-lg overflow-hidden">
     <div class="card-image rounded-lg border-2 border-quaternary" />
     <div class="card-content flex-1">
         <div class="font-bold text-xl my-2">{card.title}</div>

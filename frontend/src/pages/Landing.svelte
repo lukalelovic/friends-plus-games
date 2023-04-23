@@ -3,10 +3,13 @@
     import GameCard from "../widgets/GameCard.svelte";
 
     const cards = [
-        { title: "Card 1", description: "This is the first card" },
-        { title: "Card 2", description: "This is the second card" },
-        { title: "Card 3", description: "This is the third card" },
+        { title: "Tag", description: "Play tag with your friends!", url: generateLobbyID() },
     ];
+
+    function generateLobbyID() { // TODO: a check with backend DB for used lobbies
+        // Generate a random ID for the lobby
+        return Math.random().toString(36).substring(2, 8);
+    }
 </script>
 
 <div class="min-h-screen flex flex-col">
