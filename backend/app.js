@@ -40,7 +40,7 @@ lobbyNamespace.on('connection', (socket) => {
         lobbyMap.set(lobbyId, lobbyList);
 
         // Send update of all players in lobby
-        socket.to(lobbyId).emit('lobbyState', lobbyList);
+        lobbyNamespace.to(lobbyId).emit('lobbyState', lobbyList);
 
         console.log(`Player ${socket.id} (${p.name}) joined lobby ${lobbyId}`);
     });

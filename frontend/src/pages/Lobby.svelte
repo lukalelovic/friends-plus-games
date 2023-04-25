@@ -19,11 +19,18 @@
     onMount(() => {
         // Connect to the Socket.io endpoint on the backend
         socket = io("http://localhost:3000/lobby");
+
+        socket.on("lobbyState", (players) => {
+            playerNames = [];
+
+            players.forEach((player) => {
+                playerNames.push(player.name);
+            });
+        });
     });
 
     export let showForm = true;
     export let playerNames = [];
-
 
     // Join lobby function
     export function joinLobby(e) {
@@ -33,15 +40,6 @@
         showForm = false;
 
         socket.emit("joinLobby", lobbyId, name);
-
-        socket.on("lobbyState", (players) => {
-            console.log(players);
-            playerNames = [];
-
-            players.forEach((player) => {
-                playerNames.push(player.name);
-            });
-        });
     }
 
     function startGame() {
@@ -58,7 +56,10 @@
             <JoinForm title={gameTitle} handleSubmit={joinLobby} />
         {:else}
             <UserList {playerNames} />
-            <StandardButton clickEvent={startGame} value="Start Game" />
+
+            <div class="mt-3">
+                <StandardButton filled={false} clickEvent={startGame} value="Start Game" />
+            </div>
         {/if}
     </div>
 </div>
