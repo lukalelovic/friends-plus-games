@@ -2,6 +2,7 @@
     import UserList from "../widgets/UserList.svelte";
     import JoinForm from "../forms/JoinForm.svelte";
 
+    import { navigate } from "svelte-routing";
     import { onMount } from "svelte";
     import io from "socket.io-client";
     import Navbar from "../generic/Navbar.svelte";
@@ -27,6 +28,10 @@
                 playerNames.push(player.name);
             });
         });
+
+        socket.on("gameStarted", () => {
+            navigate(`/game/tag/${lobbyId}?player=${socket.id}`);
+        });
     });
 
     export let showForm = true;
@@ -44,7 +49,8 @@
 
     function startGame() {
         // Emit a 'startGame' event to the server with the lobby ID
-        socket.emit("startGame", lobbyId);
+        socket.emit("startGame", lobbyId, gameTitle);
+        navigate('/game/tag/'+lobbyId);
     }
 </script>
 

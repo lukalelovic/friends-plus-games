@@ -27,6 +27,8 @@ lobbyNamespace.on('connection', (socket) => {
         lobbyId = id;
         socket.join(lobbyId);
 
+        console.log(`Game lobby ${lobbyId} created`);
+
         // Initialize player object
         let p = new Player(socket.id, 0, 0);
         p.setName(name);
@@ -45,12 +47,25 @@ lobbyNamespace.on('connection', (socket) => {
         console.log(`Player ${socket.id} (${p.name}) joined lobby ${lobbyId}`);
     });
 
-    socket.on('startGame', (id) => {
-        // Get the current lobby state and send it to the tag game namespace
-        const state = getLobbyState(id);
-        tagGameNamespace.to(lobbyId).emit('startGame', state);
+    socket.on('startGame', (id, gameName) => {
+        // Send current lobby to matching game name
+        if (gameName.toLowerCase() === "tag") {
+            // Get the current lobby state
+            const lobbyList = lobbyMap.get(id);
 
-        console.log(`Starting game for lobby ${lobbyId}`);
+            // Add all players in lobby to tagGameNamespace
+            let playerMap = new Map();
+            lobbyList.forEach(player => {
+                playerMap.set(player.id, player);
+            });
+            tagLobbyPlayerMap.set(lobbyId, playerMap);
+
+        } else {
+            console.error('Invalid game name: ' + gameName);
+        }
+
+        lobbyNamespace.to(lobbyId).emit('gameStarted');
+        console.log(`Starting ${gameName} game for lobby ${lobbyId}...`);
     });
 
     socket.on('disconnect', () => {
@@ -69,41 +84,81 @@ lobbyNamespace.on('connection', (socket) => {
         // Send update of all players in lobby
         socket.to(lobbyId).emit('lobbyState', lobbyList);
         console.log(`Player ${socket.id} left lobby ${lobbyId}`);
+
+        if (lobbyList.length == 0) {
+            lobbyMap.delete(lobbyId);
+            console.log(`Lobby ${lobbyId} has ended`);
+        }
     });
 });
 
 // Tag game socket.io code
 const tagGameNamespace = io.of('/tag-game');
-const players = new Map();
+const tagLobbyPlayerMap = new Map();
 
 tagGameNamespace.on('connection', (socket) => {
-    const player = new Player(socket.id, 50, 50);
-    players.set(socket.id, player);
+    let lobbyId;
+    let playerMap;
 
-    // Send the current game state to the new client
-    socket.emit('join', player);
+    socket.on('joinGame', (id, oldSockId) => {
+        lobbyId = id;
+        socket.join(lobbyId);
+        
+        // Game created with given lobby?
+        if (tagLobbyPlayerMap.has(lobbyId)) {
+            playerMap = tagLobbyPlayerMap.get(lobbyId);
+            
+            // Update socket mapping
+            if (oldSockId != "") {
+                playerMap.set(socket.id, playerMap.get(oldSockId));
+                playerMap.delete(oldSockId);
+                playerMap.get(socket.id).id = socket.id;
+            }
+            
+            // Return lobby players to the socket
+            tagGameNamespace.to(lobbyId).emit('currentState', getPlayerJson());
+            console.log(`Player ${socket.id} joined tag game ${lobbyId}`);
+        } else {
+            console.error(`Game lobby ${lobbyId} was not created.`);
+        }
+    });
 
     socket.on('movePlayer', (id, x, y) => {
+        if (!playerMap) return;
+
         // Update the player's position in the players map
-        const player = players.get(id);
+        const player = playerMap.get(id);
         if (player) {
             player.x = x;
             player.y = y;
         }
+        playerMap.set(id, player);
 
         // Broadcast the new state to all connected clients
-        io.emit('currentState', Array.from(players.values()));
+        tagGameNamespace.to(lobbyId).emit('currentState', getPlayerJson());
     });
 
     socket.on('disconnect', () => {
+        if (!playerMap) return;
+        
         // Remove player from lobby
-        if (players.has(socket.id)) {
-            players.delete(socket.id);
-            // io.to('lobby').emit('update-lobby', playerJson());
+        if (playerMap.has(socket.id)) {
+            playerMap.delete(socket.id);
         }
 
-        console.log(`Socket ${socket.id} disconnected`);
+        tagGameNamespace.to(lobbyId).emit('currentState', getPlayerJson());
+        console.log(`Socket ${socket.id} disconnected from game`);
+
+        // End lobby session when all players disconnected
+        if (playerMap.size == 0) {
+            tagLobbyPlayerMap.delete(lobbyId);
+            console.log(`Game session ${lobbyId} ended`);
+        }
     });
+
+    function getPlayerJson() {
+        return JSON.stringify(Array.from(playerMap.values()));
+    }
 });
 
 const port = process.env.PORT || 3000;

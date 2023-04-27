@@ -1,23 +1,51 @@
 <script>
     import Konva from "konva";
-    import { onDestroy } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { io } from "socket.io-client";
     import Game from "../pages/Game.svelte";
 
+    let lobbyId, oldSocketId;
+    
     const MOVE_OFFSET = 5;
     let keys = {};
 
-    const socket = io("http://localhost:3000/tag-game");
+    let socket;
     let players = [];
 
-    socket.on("join", (player) => {
-        players.push(player);
+    onMount(() => {
+        socket = io("http://localhost:3000/tag-game");
+
+        setTimeout(() => {
+            const url = new URL(window.location.href);
+            
+            lobbyId = url.pathname.substring(url.pathname.lastIndexOf('/')+1);
+            oldSocketId = url.searchParams.get("player");
+
+            socket.emit('joinGame', lobbyId, oldSocketId);
+        }, 150);
     });
 
     function start(stage, layer) {
-        socket.on("currentState", (state) => {
+    }
+
+    function update(stage, layer) {
+        setTimeout(() => {
+            drawPlayers(stage, layer);
+        }, 5); // Draw every 5 milli-seconds
+
+        // add event listeners for keydown and keyup events
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+
+        checkPlayerMovement(stage);
+    }
+
+    function drawPlayers(stage, layer) {
+        if (!socket) return;
+        
+        socket.on("currentState", (listString) => {
             // Update the local player list with the latest state from the server
-            players = state;
+            players = JSON.parse(listString);
 
             // Remove all existing player shapes from the stage
             layer.destroyChildren();
@@ -46,14 +74,6 @@
                 layer.add(rect);
             });
         });
-    }
-
-    function update(stage, layer) {
-        // add event listeners for keydown and keyup events
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
-
-        checkPlayerMovement(stage);
     }
 
     function handleKeyDown(event) {
@@ -87,8 +107,6 @@
             // down arrow
             player.y = player.y + MOVE_OFFSET;
         }
-
-        console.log(player.x-100, player.y-100, stage.width(), stage.height());
 
         // Send the new position to the server
         socket.emit("movePlayer", socket.id, player.x, player.y);
