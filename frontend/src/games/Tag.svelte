@@ -5,33 +5,34 @@
     import Game from "../pages/Game.svelte";
 
     let lobbyId, oldSocketId;
-    
+
+    const JOIN_WAIT = 150;
     const MOVE_OFFSET = 5;
     let keys = {};
 
     let socket;
     let players = [];
+    let playerRects = {};
 
     onMount(() => {
         socket = io("http://localhost:3000/tag-game");
 
         setTimeout(() => {
             const url = new URL(window.location.href);
-            
-            lobbyId = url.pathname.substring(url.pathname.lastIndexOf('/')+1);
+
+            lobbyId = url.pathname.substring(url.pathname.lastIndexOf("/") + 1);
             oldSocketId = url.searchParams.get("player");
 
-            socket.emit('joinGame', lobbyId, oldSocketId);
-        }, 150);
+            socket.emit("joinGame", lobbyId, oldSocketId);
+        }, JOIN_WAIT);
     });
 
     function start(stage, layer) {
+        // Any initialization logic
     }
 
     function update(stage, layer) {
-        setTimeout(() => {
-            drawPlayers(stage, layer);
-        }, 5); // Draw every 5 milli-seconds
+        drawPlayers(stage, layer);
 
         // add event listeners for keydown and keyup events
         window.addEventListener("keydown", handleKeyDown);
@@ -42,36 +43,34 @@
 
     function drawPlayers(stage, layer) {
         if (!socket) return;
-        
+
         socket.on("currentState", (listString) => {
             // Update the local player list with the latest state from the server
             players = JSON.parse(listString);
 
-            // Remove all existing player shapes from the stage
-            layer.destroyChildren();
-
-            // create a new rectangle shape for the background
-            const bg = new Konva.Rect({
-                x: 0,
-                y: 0,
-                width: stage.width(),
-                height: stage.height(),
-                fill: "black",
-            });
-
-            // add the background shape to the layer
-            layer.add(bg);
-
             // Add each player shape to layer
             players.forEach((player) => {
-                const rect = new Konva.Rect({
-                    x: player.x,
-                    y: player.y,
-                    width: 100,
-                    height: 100,
-                    fill: player.id === socket.id ? "blue" : "red",
-                });
-                layer.add(rect);
+                // check if the player's rect already exists in playerRects
+                if (player.id in playerRects) {
+                    // update the existing rect with the player's new position and color
+                    const rect = playerRects[player.id];
+                    rect.setAttrs({
+                        x: player.x,
+                        y: player.y,
+                        fill: player.id === socket.id ? "blue" : "red",
+                    });
+                } else {
+                    // create a new rect for the player and add it to the layer and playerRects
+                    const rect = new Konva.Rect({
+                        x: player.x,
+                        y: player.y,
+                        width: 100,
+                        height: 100,
+                        fill: player.id === socket.id ? "blue" : "red",
+                    });
+                    layer.add(rect);
+                    playerRects[player.id] = rect;
+                }
             });
         });
     }
@@ -99,11 +98,11 @@
             // up arrow
             player.y = player.y - MOVE_OFFSET;
         }
-        if (keys[39] && player.x < stage.width()-100) {
+        if (keys[39] && player.x < stage.width() - 100) {
             // right arrow
             player.x = player.x + MOVE_OFFSET;
         }
-        if (keys[40] && player.y < stage.height()-100) {
+        if (keys[40] && player.y < stage.height() - 100) {
             // down arrow
             player.y = player.y + MOVE_OFFSET;
         }
@@ -119,4 +118,4 @@
     });
 </script>
 
-<Game width={1280} height={640} {start} {update} />
+<Game background="black" width={1280} height={640} {start} {update} />

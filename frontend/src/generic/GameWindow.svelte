@@ -4,6 +4,7 @@
 
     let stage, layer;
 
+    export let background;
     export let width;
     export let height;
 
@@ -22,6 +23,18 @@
 
         // Call start method
         if (typeof start === "function") {
+            // create a new rectangle shape for the background
+            const bg = new Konva.Rect({
+                x: 0,
+                y: 0,
+                width: stage.width(),
+                height: stage.height(),
+                fill: background,
+            });
+
+            // add the background shape to the layer
+            layer.add(bg);
+
             start(stage, layer);
         }
 

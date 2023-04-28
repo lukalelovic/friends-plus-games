@@ -109,7 +109,7 @@ tagGameNamespace.on('connection', (socket) => {
             playerMap = tagLobbyPlayerMap.get(lobbyId);
             
             // Update socket mapping
-            if (oldSockId != "") {
+            if (playerMap.has(oldSockId)) {
                 playerMap.set(socket.id, playerMap.get(oldSockId));
                 playerMap.delete(oldSockId);
                 playerMap.get(socket.id).id = socket.id;

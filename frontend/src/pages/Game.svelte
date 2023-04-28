@@ -2,6 +2,7 @@
     import Navbar from "../generic/Navbar.svelte";
     import GameWindow from "../generic/GameWindow.svelte";
 
+    export let background;
     export let width;
     export let height;
 
@@ -13,6 +14,6 @@
     <Navbar />
 
     <div class="flex mt-4 justify-center items-center">
-        <GameWindow width={width} height={height} {start} {update} />
+        <GameWindow background={background} width={width} height={height} {start} {update} />
     </div>
 </div>
