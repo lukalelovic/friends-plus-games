@@ -8,11 +8,13 @@
 
     const JOIN_WAIT = 150;
     const MOVE_OFFSET = 5;
+    const PLAYER_SIZE = 50;
+
     let keys = {};
 
     let socket;
     let players = [];
-    let playerRects = {};
+    let playerCircles = {};
 
     onMount(() => {
         socket = io("http://localhost:3000/tag-game");
@@ -50,28 +52,39 @@
 
             // Add each player shape to layer
             players.forEach((player) => {
-                // check if the player's rect already exists in playerRects
-                if (player.id in playerRects) {
+                // check if the player's rect already exists in playerCircles
+                if (player.id in playerCircles) {
                     // update the existing rect with the player's new position and color
-                    const rect = playerRects[player.id];
-                    rect.setAttrs({
+                    const circ = playerCircles[player.id];
+                    circ.setAttrs({
                         x: player.x,
                         y: player.y,
                         fill: player.id === socket.id ? "blue" : "red",
                     });
                 } else {
-                    // create a new rect for the player and add it to the layer and playerRects
-                    const rect = new Konva.Rect({
-                        x: player.x,
-                        y: player.y,
-                        width: 100,
-                        height: 100,
+                    // create a new rect for the player and add it to the layer and playerCircles
+                    const circ = new Konva.Circle({
+                        x: getRandomPos(PLAYER_SIZE, stage.width()-PLAYER_SIZE),
+                        y: getRandomPos(PLAYER_SIZE, stage.height()-PLAYER_SIZE),
+                        radius: PLAYER_SIZE,
                         fill: player.id === socket.id ? "blue" : "red",
                     });
-                    layer.add(rect);
-                    playerRects[player.id] = rect;
+                    layer.add(circ);
+                    playerCircles[player.id] = circ;
+                    console.log(circ.x(), circ.y());
+                    socket.emit("movePlayer", socket.id, circ.x(), circ.y());
                 }
             });
+        });
+
+        socket.on("playerLeft", (socketId) => {
+            if (socketId in playerCircles) {
+                console.log("here");
+                const shape = playerCircles[socketId];
+
+                shape.remove();
+                shape.destroy();
+            }
         });
     }
 
@@ -90,19 +103,19 @@
         }
 
         // check if any arrow keys are pressed
-        if (keys[37] && player.x > 0) {
+        if (keys[37] && player.x > PLAYER_SIZE) {
             // left arrow
             player.x = player.x - MOVE_OFFSET;
         }
-        if (keys[38] && player.y > 0) {
+        if (keys[38] && player.y > PLAYER_SIZE) {
             // up arrow
             player.y = player.y - MOVE_OFFSET;
         }
-        if (keys[39] && player.x < stage.width() - 100) {
+        if (keys[39] && player.x < stage.width() - PLAYER_SIZE) {
             // right arrow
             player.x = player.x + MOVE_OFFSET;
         }
-        if (keys[40] && player.y < stage.height() - 100) {
+        if (keys[40] && player.y < stage.height() - PLAYER_SIZE) {
             // down arrow
             player.y = player.y + MOVE_OFFSET;
         }
@@ -111,6 +124,9 @@
         socket.emit("movePlayer", socket.id, player.x, player.y);
     }
 
+    function getRandomPos(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
     onDestroy(() => {
         // remove the event listeners when the component is destroyed
         window.removeEventListener("keydown", handleKeyDown);
