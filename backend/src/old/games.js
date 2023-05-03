@@ -1,5 +1,5 @@
 const socketIO = require('socket.io');
-const Player = require('../Player');
+const Player = require('./player');
 
 function initializeGames(server) {
     return socketIO(server, {

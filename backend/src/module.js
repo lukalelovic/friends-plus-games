@@ -1,11 +1,13 @@
-const { Module } = require('@nestjs/common');
-const { TypeOrmModule } = require('@nestjs/typeorm');
-const { AppController } = require('./controller');
-const { AppService } = require('./service');
-const { User } = require('./user.entity');
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserController } from './controller';
+import { UserService } from './service';
+import { User } from './models/user.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
     imports: [
+        ConfigModule.forRoot(),
         TypeOrmModule.forRoot({
             type: "mariadb",
             host: process.env.DB_HOST,
@@ -15,11 +17,10 @@ const { User } = require('./user.entity');
             database: process.env.DB_NAME,
             synchronize: true,
             entities: [User],
-            synchronize: true,
         }),
         TypeOrmModule.forFeature([User]),
     ],
-    controllers: [AppController],
-    providers: [AppService],
+    providers: [UserService],
+    controllers: [UserController],
 })
 export class AppModule {}

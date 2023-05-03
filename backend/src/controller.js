@@ -1,18 +1,16 @@
-const { Controller, Get } = require('@nestjs/common');
-const { AppService } = require('./app.service');
+import { Controller, Dependencies, Injectable, Get } from '@nestjs/common';
+import { UserService } from './service';
 
 @Controller()
-class AppController {
-    constructor(appService) {
-        this.appService = appService;
+@Injectable()
+@Dependencies(UserService)
+export class UserController {
+    constructor(userService) {
+        this.userService = userService;
     }
 
     @Get()
-    getHello() {
-        return this.appService.getHelloName('John');
+    getUsers() {
+        return this.userService.getAll();   
     }
 }
-
-module.exports = {
-    AppController,
-};

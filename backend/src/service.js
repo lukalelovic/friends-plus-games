@@ -1,16 +1,23 @@
-const { Injectable } = require('@nestjs/common');
+import { Injectable, Dependencies } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { User } from './models/user.entity';
 
 @Injectable()
-class AppService {
-    getHello() {
-        return 'Hello World!';
+@Dependencies(getRepositoryToken(User))
+export class UserService {
+    constructor(usersRepository) {
+        this.usersRepository = usersRepository;
     }
 
-    getHelloName(name) {
-        return `Hello, ${name}!`;
+    findAll() {
+        return this.usersRepository.find();
+    }
+
+    findOne(id) {
+        return this.usersRepository.findOne(id);
+    }
+
+    async remove(id) {
+        await this.usersRepository.delete(id);
     }
 }
-
-module.exports = {
-    AppService,
-};
