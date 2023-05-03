@@ -1,9 +1,19 @@
 <script>
+    import axios from 'axios';
+
     let username = "";
     let password = "";
 
     function handleSubmit() {
         // Handle login form submission
+        axios.post('http://localhost:3000/login', {
+            params: {
+                username: username,
+                password: password
+            }
+        }).then((res) => {
+            // Login the user
+        }).catch((err) => console.error(err)); // Invalid login
     }
 </script>
 
