@@ -1,12 +1,14 @@
-import { Module } from '@nestjs/common';
+import { Module, Injectable, Dependencies } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserController } from './controller';
 import { UserService } from './service';
-import { User } from './models/user.entity';
+import { User } from './entities/user.entity';
 import { ConfigModule } from '@nestjs/config';
+import { SocketsModule } from './sockets/sockets.module';
 
 @Module({
     imports: [
+        SocketsModule,
         ConfigModule.forRoot(),
         TypeOrmModule.forRoot({
             type: "mariadb",
@@ -23,4 +25,4 @@ import { ConfigModule } from '@nestjs/config';
     providers: [UserService],
     controllers: [UserController],
 })
-export class AppModule {}
+export class AppModule { }

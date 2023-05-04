@@ -1,6 +1,6 @@
 import { Injectable, Dependencies } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from './models/user.entity';
+import { User } from './entities/user.entity';
 
 @Injectable()
 @Dependencies(getRepositoryToken(User))
