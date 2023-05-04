@@ -1,8 +1,7 @@
-import { Controller, Dependencies, Injectable, Get } from '@nestjs/common';
+import { Controller, Dependencies, Get } from '@nestjs/common';
 import { UserService } from './service';
 
 @Controller()
-@Injectable()
 @Dependencies(UserService)
 export class UserController {
     constructor(userService) {
