@@ -19,7 +19,7 @@
 
     onMount(() => {
         // Connect to the Socket.io endpoint on the backend
-        socket = io("http://localhost:3000", { path: '/lobby', transports: ['websocket']});
+        socket = io("http://localhost:3000", { path: '/lobby', transports: ['websocket'] });
 
         socket.on("lobbyState", (players) => {
             playerNames = [];

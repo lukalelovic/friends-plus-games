@@ -1,18 +1,25 @@
 import { WebSocketGateway, WebSocketServer, SubscribeMessage } from '@nestjs/websockets';
+import { Dependencies } from '@nestjs/common';
+import { TagGateway } from './games/tag.gateway';
 import { Player } from '../models/player';
 
 @WebSocketGateway({
     cors: {
-        origin: process.env.FRONTEND_URI, // TODO: environment variable
+        origin: process.env.FRONTEND_URI,
     },
     path: '/lobby'
 })
+@Dependencies(TagGateway)
 export class LobbyGateway {
     @WebSocketServer()
     server;
 
     lobbyMap = new Map(); // Contains <lobby id>:<player object>
     lobbyId;
+
+    constructor(tagGatway) {
+        this.tagGatway = tagGatway;
+    }
 
     handleConnection(socket) {
         console.log(`Client ${socket.id} connected to the lobby namespace`);
@@ -40,6 +47,32 @@ export class LobbyGateway {
         // Send update of all players in lobby
         this.server.to(this.lobbyId).emit('lobbyState', lobbyList);
         console.log(`Player ${socket.id} (${p.name}) joined lobby ${this.lobbyId}`);
+    }
+
+    @SubscribeMessage('startGame')
+    handleStartGame(socket, data) {
+        let id = data[0];
+        let gameName = data[1];
+
+        // Send current lobby to matching game name
+        if (gameName.toLowerCase() === "tag") {
+            // Get the current lobby state
+            const lobbyList = this.lobbyMap.get(id);
+
+            // Get all player id to object mapping
+            let playerMap = new Map();
+            lobbyList.forEach(player => {
+                playerMap.set(player.id, player);
+            });
+            
+            // Update tag map with players
+            this.tagGatway.setPlayerMap(playerMap);
+
+            this.server.to(this.lobbyId).emit('gameStarted');
+            console.log(`Starting ${gameName} game for lobby ${this.lobbyId}...`);
+        } else {
+            console.error('Invalid game name: ' + gameName);
+        }
     }
 
     handleDisconnect(socket) {

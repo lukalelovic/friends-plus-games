@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { LobbyGateway } from './lobby.gateway';
+import { TagGateway } from './games/tag.gateway';
 
 @Module({
     providers: [
@@ -18,6 +19,7 @@ import { LobbyGateway } from './lobby.gateway';
             },
         },
         LobbyGateway,
+        TagGateway,
     ],
 })
 export class SocketsModule { }
