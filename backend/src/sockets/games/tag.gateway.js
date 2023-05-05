@@ -6,7 +6,7 @@ import { Player } from '../../models/player';
     cors: {
         origin: process.env.FRONTEND_URI,
     },
-    path: '/tag-game'
+    path: '/tag'
 })
 @Injectable()
 export class TagGateway {
@@ -51,7 +51,7 @@ export class TagGateway {
         if (!this.playerMap) return;
 
         // Update the player's position in the players map
-        const player = playerMap.get(id);
+        const player = this.playerMap.get(id);
         if (player) {
             player.x = x;
             player.y = y;
@@ -75,7 +75,7 @@ export class TagGateway {
 
         // End lobby session when all players disconnected
         if (this.playerMap.size == 0) {
-            console.log(`Game session ${lobbyId} ended`);
+            console.log(`Game session ${this.lobbyId} ended`);
         }
     }
 
@@ -84,6 +84,6 @@ export class TagGateway {
     }
 
     getPlayerJson() {
-        return JSON.stringify(Array.from(playerMap.values()));
+        return JSON.stringify(Array.from(this.playerMap.values()));
     }
 }

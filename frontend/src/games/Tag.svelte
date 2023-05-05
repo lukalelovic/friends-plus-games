@@ -17,7 +17,7 @@
     let playerCircles = {};
 
     onMount(() => {
-        socket = io("http://localhost:3000", { path: 'tag-game', transports: ['websocket'] });
+        socket = io("http://localhost:3000", { path: '/tag', transports: ['websocket'] });
 
         setTimeout(() => {
             const url = new URL(window.location.href);
