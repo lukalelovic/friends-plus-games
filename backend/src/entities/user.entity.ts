@@ -4,17 +4,17 @@ import { Length } from 'class-validator';
 @Entity({name: 'User'})
 export class User {
     @PrimaryGeneratedColumn()
-    id;
+    id: number;
 
-    @Column({type: 'varchar'})
+    @Column()
     @Length(3, 20)
-    userName;
+    userName: string;
 
-    @Column({type: 'varchar'})
+    @Column()
     @Length(5, 30)
-    email;
+    email: string;
 
-    @Column({type: 'varchar'})
+    @Column()
     @Length(7, 30)
-    password;
+    password: string;
 }
