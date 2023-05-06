@@ -19,8 +19,7 @@ export class LobbyGateway {
   @WebSocketServer()
   server: Server;
 
-  lobbyMap = new Map<string, Player[]>();
-  lobbyId: string;
+  lobbyMap = new Map<string, Player[]>(); // Contains <lobby id>:<player list>
 
   constructor(private readonly tagGatway: TagGateway) {}
 
@@ -30,10 +29,8 @@ export class LobbyGateway {
 
   @SubscribeMessage('joinLobby')
   handleJoinLobby(socket: Socket, data: string): void {
-    this.lobbyId = data[0];
-    socket.join(this.lobbyId);
-
-    console.log(`Game lobby ${this.lobbyId} created`);
+    const lobbyId = data[0];
+    socket.join(lobbyId);
 
     // Initialize player object
     const p = new Player(socket.id, 0, 0);
@@ -41,26 +38,29 @@ export class LobbyGateway {
 
     // Add player to lobby map list
     let lobbyList: Player[] = [];
-    if (this.lobbyMap.has(this.lobbyId)) {
-      lobbyList = this.lobbyMap.get(this.lobbyId);
+    if (this.lobbyMap.has(lobbyId)) {
+      lobbyList = this.lobbyMap.get(lobbyId);
+    } else {
+      console.log(`Game lobby ${lobbyId} created`);
     }
+
     lobbyList.push(p);
-    this.lobbyMap.set(this.lobbyId, lobbyList);
+    this.lobbyMap.set(lobbyId, lobbyList);
 
     // Send update of all players in lobby
-    this.server.to(this.lobbyId).emit('lobbyState', lobbyList);
-    console.log(`Player ${socket.id} (${p.name}) joined lobby ${this.lobbyId}`);
+    this.server.to(lobbyId).emit('lobbyState', lobbyList);
+    console.log(`Player ${socket.id} (${p.name}) joined lobby ${lobbyId}`);
   }
 
   @SubscribeMessage('startGame')
   handleStartGame(socket: Socket, data: string): void {
-    const id: string = data[0];
+    const lobbyId: string = data[0];
     const gameName: string = data[1];
 
     // Send current lobby to matching game name
     if (gameName.toLowerCase() === 'tag') {
       // Get the current lobby state
-      const lobbyList: Player[] = this.lobbyMap.get(id);
+      const lobbyList: Player[] = this.lobbyMap.get(lobbyId);
 
       // Get all player id to object mapping
       const playerMap = new Map<string, Player>();
@@ -69,35 +69,46 @@ export class LobbyGateway {
       });
 
       // Update tag map with players
-      this.tagGatway.setPlayerMap(playerMap);
+      this.tagGatway.setPlayerMap(lobbyId, playerMap);
 
-      this.server.to(this.lobbyId).emit('gameStarted');
-      console.log(`Starting ${gameName} game for lobby ${this.lobbyId}...`);
+      this.server.to(lobbyId).emit('gameStarted');
+      console.log(`Starting ${gameName} game for lobby ${lobbyId}...`);
     } else {
       console.error('Invalid game name: ' + gameName);
     }
   }
 
   handleDisconnect(socket: Socket): void {
-    if (!this.lobbyId) return;
+    let lobbyId: string;
+    let lobbyList: Player[];
+    let playerIndex: number;
 
-    const lobbyList: Player[] = this.lobbyMap.get(this.lobbyId);
-    if (!lobbyList) return;
+    // Get the current lobby and player index within it
+    for (const [id, list] of this.lobbyMap.entries()) {
+      playerIndex = list.findIndex((p) => p.id === socket.id);
+      lobbyId = id;
+      lobbyList = list;
+
+      if (playerIndex > -1) {
+        break;
+      }
+    }
+
+    if (playerIndex == -1) return;
 
     // Find player from lobby list and remove
-    const playerIndex: number = lobbyList.findIndex((p) => p.id === socket.id);
     lobbyList.splice(playerIndex, 1);
 
     // Update lobby map
-    this.lobbyMap.set(this.lobbyId, lobbyList);
+    this.lobbyMap.set(lobbyId, lobbyList);
 
     // Send update of all players in lobby
-    this.server.to(this.lobbyId).emit('lobbyState', lobbyList);
-    console.log(`Player ${socket.id} left lobby ${this.lobbyId}`);
+    this.server.to(lobbyId).emit('lobbyState', lobbyList);
+    console.log(`Player ${socket.id} left lobby ${lobbyId}`);
 
     if (lobbyList.length === 0) {
-      this.lobbyMap.delete(this.lobbyId);
-      console.log(`Lobby ${this.lobbyId} has ended`);
+      this.lobbyMap.delete(lobbyId);
+      console.log(`Lobby ${lobbyId} has ended`);
     }
   }
 }

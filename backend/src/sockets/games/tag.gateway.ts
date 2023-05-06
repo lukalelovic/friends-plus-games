@@ -18,8 +18,7 @@ export class TagGateway {
   @WebSocketServer()
   server: Server;
 
-  playerMap = new Map<string, Player>(); // Contains <socketId:player>
-  lobbyId: string;
+  lobbyPlayerMap = new Map<string, Map<string, Player>>(); // Contains <lobbyId>:<player map>
 
   handleConnection(socket: Socket): void {
     console.log(`Client ${socket.id} connected to the game namespace`);
@@ -27,68 +26,105 @@ export class TagGateway {
 
   @SubscribeMessage('joinGame')
   handleJoinGame(socket: Socket, data: string): void {
-    if (!this.playerMap) return;
-
-    this.lobbyId = data[0];
+    const lobbyId = data[0];
     const oldSockId: string = data[1];
 
-    socket.join(this.lobbyId);
+    const playerMap: Map<string, Player> = this.lobbyPlayerMap.get(lobbyId);
+    if (!playerMap) return;
+
+    socket.join(lobbyId);
 
     // Update socket mapping
-    if (this.playerMap.has(oldSockId)) {
-      this.playerMap.set(socket.id, this.playerMap.get(oldSockId));
+    if (playerMap.has(oldSockId)) {
+      playerMap.set(socket.id, playerMap.get(oldSockId));
 
-      this.playerMap.delete(oldSockId);
-      this.playerMap.get(socket.id).id = socket.id;
+      playerMap.delete(oldSockId);
+      playerMap.get(socket.id).id = socket.id;
     }
 
     // Return lobby players to the socket
-    this.server.to(this.lobbyId).emit('currentState', this.getPlayerJson());
-    console.log(`Player ${socket.id} joined tag game ${this.lobbyId}`);
+    this.server.to(lobbyId).emit('currentState', this.getPlayerJson(lobbyId));
+    console.log(`Player ${socket.id} joined tag game ${lobbyId}`);
   }
 
   @SubscribeMessage('movePlayer')
   handleMovePlayer(socket: Socket, data: string): void {
-    const id: string = data[0];
-    const x = Number(data[1]);
-    const y = Number(data[2]);
+    const lobbyId: string = data[0];
+    const playerId: string = data[1];
+    const x = Number(data[2]);
+    const y = Number(data[3]);
 
-    if (!this.playerMap) return;
+    const playerMap: Map<string, Player> = this.lobbyPlayerMap.get(lobbyId);
+    if (!playerMap) return;
 
     // Update the player's position in the players map
-    const player: Player = this.playerMap.get(id);
+    const player: Player = playerMap.get(playerId);
     if (player) {
       player.x = x;
       player.y = y;
     }
-    this.playerMap.set(id, player);
+    playerMap.set(playerId, player);
+    this.setPlayerMap(lobbyId, playerMap);
 
     // Broadcast the new state to all connected clients
-    this.server.to(this.lobbyId).emit('currentState', this.getPlayerJson());
+    this.server.to(lobbyId).emit('currentState', this.getPlayerJson(lobbyId));
+  }
+
+  @SubscribeMessage('tagPlayer')
+  handleTagPlayer(socket: Socket, data: string): void {
+    const lobbyId: string = data[0];
+    const tagId: string = data[1];
+
+    // Lobby exists and player is in it? Emit tagged player ID
+    if (
+      this.lobbyPlayerMap.has(lobbyId) &&
+      this.lobbyPlayerMap.get(lobbyId).has(tagId)
+    ) {
+      this.server.to(lobbyId).emit('playerTagged', tagId);
+      console.log(`Player ${tagId} in lobby ${lobbyId} was tagged!`);
+    } else {
+      console.error(`Player ${tagId} in lobby ${lobbyId} not found`);
+    }
   }
 
   handleDisconnect(socket: Socket): void {
-    if (!this.playerMap) return;
+    // Get the lobby ID of the current socket
+    let lobbyId: string;
+    let playerMap = new Map<string, Player>();
+
+    // Find the current player's lobby
+    for (const [id, map] of this.lobbyPlayerMap.entries()) {
+      if (map.has(socket.id)) {
+        playerMap = map;
+        lobbyId = id;
+        break;
+      }
+    }
+
+    if (lobbyId == undefined) return;
 
     // Remove player from lobby
-    if (this.playerMap.has(socket.id)) {
-      this.playerMap.delete(socket.id);
+    if (playerMap.has(socket.id)) {
+      playerMap.delete(socket.id);
     }
 
-    this.server.to(this.lobbyId).emit('playerLeft', socket.id);
-    console.log(`Socket ${socket.id} disconnected from game`);
+    this.setPlayerMap(lobbyId, playerMap);
+    this.server.to(lobbyId).emit('playerLeft', socket.id);
+    console.log(`Socket ${socket.id} disconnected from game namespace`);
 
     // End lobby session when all players disconnected
-    if (this.playerMap.size == 0) {
-      console.log(`Game session ${this.lobbyId} ended`);
+    if (playerMap.size == 0) {
+      console.log(`Game session ${lobbyId} ended`);
     }
   }
 
-  setPlayerMap(playerMap): void {
-    this.playerMap = playerMap;
+  setPlayerMap(lobbyId: string, playerMap: Map<string, Player>): void {
+    this.lobbyPlayerMap.set(lobbyId, playerMap);
   }
 
-  getPlayerJson(): string {
-    return JSON.stringify(Array.from(this.playerMap.values()));
+  getPlayerJson(lobbyId): string {
+    return JSON.stringify(
+      Array.from(this.lobbyPlayerMap.get(lobbyId).values()),
+    );
   }
 }
