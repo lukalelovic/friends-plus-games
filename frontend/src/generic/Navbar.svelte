@@ -43,6 +43,11 @@
       requireAuth(loggedIn, '/login')
     }
   }
+
+  function logOut() {
+    localStorage.removeItem("token");
+    window.location.reload();
+  }
 </script>
 
 <nav class="bg-transparent border-b-2 border-secondary">
@@ -93,7 +98,7 @@
           </a>
         </div>
       {:else}
-        <a href="#" class="ml-4 text-white">Profile</a>
+        <button on:click={logOut} class="border-2 border-white p-2 rounded-lg ml-4 text-white hover:border-gray-200 hover:text-gray-200">Logout</button>
       {/if}
     </div>
   </div>
