@@ -4,6 +4,7 @@
   import { io } from "socket.io-client";
   import Game from "../pages/Game.svelte";
   import { detectCollisions } from "./detectCollisions";
+    import { BACKEND_URI } from "../config";
 
   let lobbyId, oldSocketId;
 
@@ -21,7 +22,7 @@
   let canDetectCollisions = true;
 
   onMount(() => {
-    socket = io("http://localhost:3000", {
+    socket = io(BACKEND_URI, {
       path: "/tag",
       transports: ["websocket"],
     });

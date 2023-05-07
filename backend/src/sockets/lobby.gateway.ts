@@ -9,9 +9,6 @@ import { Player } from '../models/player';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
-  cors: {
-    origin: process.env.FRONTEND_URI,
-  },
   path: '/lobby',
 })
 @Dependencies(TagGateway)

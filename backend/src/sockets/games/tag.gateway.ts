@@ -8,9 +8,6 @@ import { Server, Socket } from 'socket.io';
 import { Player } from '../../models/player';
 
 @WebSocketGateway({
-  cors: {
-    origin: process.env.FRONTEND_URI,
-  },
   path: '/tag',
 })
 @Injectable()
