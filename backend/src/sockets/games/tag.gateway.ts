@@ -81,9 +81,9 @@ export class TagGateway {
       this.lobbyPlayerMap.get(lobbyId).has(tagId)
     ) {
       this.server.to(lobbyId).emit('playerTagged', tagId);
-      console.log(`Player ${tagId} in lobby ${lobbyId} was tagged!`);
+      console.log(`Player ${tagId} in game ${lobbyId} was tagged!`);
     } else {
-      console.error(`Player ${tagId} in lobby ${lobbyId} not found`);
+      console.error(`Player ${tagId} in game ${lobbyId} not found`);
     }
   }
 

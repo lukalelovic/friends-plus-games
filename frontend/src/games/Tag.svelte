@@ -62,7 +62,7 @@
       players.forEach((player) => {
         let fill;
 
-        if (player.id == taggedPlayer) {
+        if (taggedPlayer && player.id == taggedPlayer) {
           fill = "red";
         } else if (player.id == socket.id) {
           fill = "green";
@@ -98,7 +98,6 @@
 
     // Get the current tagged player
     socket.on("playerTagged", (p) => {
-      console.log(taggedPlayer + ' tagged ' + p);
       taggedPlayer = p;
     });
 
@@ -150,27 +149,34 @@
 
   function checkTagPlayer() {
     if (!taggedPlayer) {
+      const randPlayer = players[Math.floor(Math.random() * players.length)];
+
       // Tag player at random (if no one is tagged)
       socket.emit(
         "tagPlayer",
         lobbyId,
-        players[Math.floor(Math.random() * players.length)].id
+        randPlayer.id
       );
-    } else if (canDetectCollisions && taggedPlayer.id == socket.id) {
+
+      taggedPlayer = randPlayer.id;
+    } else if (canDetectCollisions) {
       // Else if you are tagged, check collisions
-      const playerCollided = detectCollisions(
+      const collidedId = detectCollisions(
         playerCircles[socket.id],
         playerCircles
       );
 
+      let youAreIt = (socket.id == taggedPlayer);
+
       // Collision occurred? Other player is it!
-      if (playerCollided.id != socket.id) {
-        socket.emit("tagPlayer", lobbyId, playerCollided.id);
-        canDetectCollisions = false;
-        setTimeout(() => {
-          canDetectCollisions = true;
-        }, 3000); // 3-second cooldown period
+      if (collidedId) {
+        socket.emit("tagPlayer", lobbyId, (youAreIt) ? collidedId : socket.id);
       }
+
+      canDetectCollisions = false;
+      setTimeout(() => {
+        canDetectCollisions = true;
+      }, 500); // 500-milli-second cooldown period
     }
   }
 
