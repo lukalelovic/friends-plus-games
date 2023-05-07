@@ -16,8 +16,8 @@ export class UserController {
 
   @Post('signup')
   async signup(@Body() signupDto: SignupDto) {
-    await this.userService.signup(signupDto);
-    return { message: 'User created successfully' };
+    const token = await this.userService.signup(signupDto);
+    return { token };
   }
 
   @Post('login')

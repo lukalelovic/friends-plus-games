@@ -2,6 +2,7 @@
   import axios from "axios";
   import { BACKEND_URI } from "../config";
   import { onMount } from "svelte";
+  import { isLoggedIn } from "../stores";
 
   export let loggedIn = false;
 
@@ -22,7 +23,7 @@
     }
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${BACKEND_URI}/users/validate`,
         {},
         {
@@ -32,12 +33,13 @@
         }
       );
 
-      console.log("Successful token validation!");
-      loggedIn = true;
+      loggedIn = response.data.isValid;
     } catch (error) {
       console.log(error);
       localStorage.removeItem("token");
       loggedIn = false;
+    } finally {
+      isLoggedIn.set(loggedIn);
     }
   }
 </script>

@@ -14,7 +14,7 @@ export class UserService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signup(signupDto: SignupDto): Promise<void> {
+  async signup(signupDto: SignupDto): Promise<{ token: string }> {
     const { username, email, password } = signupDto;
 
     const user = new User();
@@ -23,6 +23,11 @@ export class UserService {
     user.password = await hash(password, 10);
 
     await this.userRepository.save(user);
+
+    const payload = { username };
+    const token = this.jwtService.sign(payload);
+
+    return { token };
   }
 
   async login(loginDto: LoginDto): Promise<{ token: string }> {

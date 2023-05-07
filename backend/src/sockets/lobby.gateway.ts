@@ -91,7 +91,7 @@ export class LobbyGateway {
       }
     }
 
-    if (playerIndex == -1) return;
+    if (playerIndex == -1 || !lobbyList) return;
 
     // Find player from lobby list and remove
     lobbyList.splice(playerIndex, 1);

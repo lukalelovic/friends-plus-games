@@ -14,8 +14,7 @@
       });
 
       console.log('Login success!');
-      const token = response.data.accessToken;
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", response.data.token.token);
       navigate('/');
     } catch (error) {
       console.error(error);
