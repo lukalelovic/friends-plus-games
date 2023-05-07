@@ -1,7 +1,6 @@
 <script>
     import UserList from "../widgets/UserList.svelte";
     import JoinForm from "../forms/JoinForm.svelte";
-
     import { navigate } from "svelte-routing";
     import { onMount } from "svelte";
     import io from "socket.io-client";

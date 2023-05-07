@@ -2,7 +2,7 @@
   import axios from "axios";
   import { BACKEND_URI } from "../config";
   import { onMount } from "svelte";
-  import { isLoggedIn } from "../stores";
+  import { requireAuth } from "../auth";
 
   export let loggedIn = false;
 
@@ -19,6 +19,7 @@
 
     if (!token) {
       loggedIn = false;
+      requireAuth(loggedIn, '/login')
       return;
     }
 
@@ -39,7 +40,7 @@
       localStorage.removeItem("token");
       loggedIn = false;
     } finally {
-      isLoggedIn.set(loggedIn);
+      requireAuth(loggedIn, '/login')
     }
   }
 </script>

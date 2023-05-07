@@ -1,25 +1,9 @@
 <script>
-  import { onMount, onDestroy } from "svelte";
-  import { isLoggedIn } from "../stores";
-
   export let card;
-  let href;
-
-  let subscription;
-
-  onMount(() => {
-    subscription = isLoggedIn.subscribe(() => {
-      href = ($isLoggedIn) ? `lobby/${card.title}/${card.url}` : "/login";
-    });
-  });
-
-  onDestroy(() => {
-    subscription.unsubscribe();
-  })
 </script>
 
 <a
-  href={href}
+  href="lobby/{card.title}/{card.url}"
   class="bg-white card rounded-lg px-2 py-12 h-64 w-1/4 shadow-lg overflow-hidden"
 >
   <div class="card-image rounded-lg border-2 border-quaternary" />

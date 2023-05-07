@@ -4,7 +4,7 @@
   import { io } from "socket.io-client";
   import Game from "../pages/Game.svelte";
   import { detectCollisions } from "./detectCollisions";
-    import { BACKEND_URI } from "../config";
+  import { BACKEND_URI } from "../config";
 
   let lobbyId, oldSocketId;
 
