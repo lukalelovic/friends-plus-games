@@ -4,7 +4,6 @@ on:
   push:
     branches: [ master ]
 
-jobs:
   deploy:
     runs-on: ubuntu-latest
 
@@ -18,7 +17,8 @@ jobs:
 
       - name: SSH and Deploy
         run: |
-          echo "$PRIVATE_KEY" | ssh -o StrictHostKeyChecking=no -i - ${USER_NAME}@${HOSTNAME}
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
             cd games-with-friends &&
             cd frontend &&
             npm install &&
