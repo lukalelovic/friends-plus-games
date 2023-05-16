@@ -1,0 +1,30 @@
+name: CI/CD deployment to EC2
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+            PRIVATE_KEY: ${{ secrets.AWS_PRIVATE_KEY  }}
+            HOSTNAME : ${{ secrets.HOSTNAME  }}
+            USER_NAME : ${{ secrets.USER_NAME  }}
+
+      - name: SSH and Deploy
+        run: |
+          echo "$PRIVATE_KEY" | ssh -o StrictHostKeyChecking=no -i - ${USER_NAME}@${HOSTNAME}
+            cd games-with-friends &&
+            cd frontend &&
+            npm install &&
+            npm run build &&
+            cd ../backend &&
+            npm install &&
+            npm run build &&
+            pm2 restart backend &&
+            sudo service nginx restart
