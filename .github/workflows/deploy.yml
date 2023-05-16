@@ -23,8 +23,7 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           port: 22
           script: |
-            cd games-with-friends &&
-            git remote set-url origin git@github.com:lukalelovic/friends-plus-games.git &&
+            cd games-with-friends && git reset --hard &&
             git pull origin master &&
             cd frontend && npm run build &&
             cd ../backend && npm run build && pm2 restart backend &&
