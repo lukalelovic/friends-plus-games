@@ -20,8 +20,8 @@ jobs:
           username: ${{ secrets.USER_NAME }}
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           port: 22
-        script: |
-          cd games-with-friends && git pull origin master &&
-          cd frontend && npm run build &&
-          cd ../backend && npm run build && pm2 restart backend &&
-          sudo service nginx restart
+          script: |
+            cd games-with-friends && git pull origin master &&
+            cd frontend && npm run build &&
+            cd ../backend && npm run build && pm2 restart backend &&
+            sudo service nginx restart
