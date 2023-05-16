@@ -4,7 +4,7 @@
   import { io } from "socket.io-client";
   import Game from "../pages/Game.svelte";
   import { detectCollisions } from "./detectCollisions";
-  import { BACKEND_URI } from "../config";
+  import { DEV_URI } from "../config";
 
   let lobbyId, oldSocketId;
 
@@ -22,7 +22,7 @@
   let canDetectCollisions = true;
 
   onMount(() => {
-    socket = io(BACKEND_URI, {
+    socket = io(DEV_URI, {
       path: "/tag",
       transports: ["websocket"],
     });
@@ -177,7 +177,7 @@
       canDetectCollisions = false;
       setTimeout(() => {
         canDetectCollisions = true;
-      }, 500); // 500-milli-second cooldown period
+      }, 3000); // 500-milli-second cooldown period
     }
   }
 

@@ -6,7 +6,7 @@
     import io from "socket.io-client";
     import Navbar from "../generic/Navbar.svelte";
     import StandardButton from "../generic/StandardButton.svelte";
-    import { BACKEND_URI } from "../config";
+    import { DEV_URI } from "../config";
 
     const urlParams = window.location.pathname.substring(1);
     const gameTitle = urlParams.substring(
@@ -19,7 +19,7 @@
 
     onMount(() => {
         // Connect to the Socket.io endpoint on the backend
-        socket = io(BACKEND_URI, { path: '/lobby', transports: ['websocket'] });
+        socket = io(DEV_URI, { path: '/lobby', transports: ['websocket'] });
 
         socket.on("lobbyState", (players) => {
             playerNames = [];

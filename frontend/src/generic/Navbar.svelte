@@ -1,6 +1,6 @@
 <script>
   import axios from "axios";
-  import { BACKEND_URI } from "../config";
+  import { DEV_URI } from "../config";
   import { onMount } from "svelte";
   import { requireAuth } from "../auth";
 
@@ -25,7 +25,7 @@
 
     try {
       const response = await axios.post(
-        `${BACKEND_URI}/users/validate`,
+        `${DEV_URI}/users/validate`,
         {},
         {
           headers: {
