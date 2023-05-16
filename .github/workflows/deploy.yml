@@ -19,7 +19,7 @@ jobs:
       - name: SSH and Deploy
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME}
+          ssh -i private_key ${USER_NAME}@${HOSTNAME}
             cd games-with-friends &&
             cd frontend &&
             npm install &&
