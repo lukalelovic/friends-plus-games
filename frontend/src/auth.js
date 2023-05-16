@@ -1,14 +1,31 @@
-export function requireAuth(loggedIn, path) {
-  if (loggedIn) return;
+import axios from "axios";
+import { DEV_URI } from "./config";
 
-  const url = window.location.pathname;
+export async function validateToken() {
+  let loggedIn = false;
+  const token = localStorage.getItem("token");
 
-  switch (url) {
-    case '/login':
-    case '/':
-    case '/signup':
-      return;
+  if (!token) {
+    return false;
+  }
+  
+  try {
+    const response = await axios.post(
+      `${DEV_URI}/users/validate`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    loggedIn = response.data.isValid;
+  } catch (error) {
+    console.log(error);
+    localStorage.removeItem("token");
+    return false;
   }
 
-  window.location.href = path;
+  return loggedIn;
 }

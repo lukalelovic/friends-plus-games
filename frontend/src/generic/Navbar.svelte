@@ -1,47 +1,16 @@
 <script>
-  import axios from "axios";
-  import { DEV_URI } from "../config";
   import { onMount } from "svelte";
-  import { requireAuth } from "../auth";
+  import { validateToken } from "../auth";
 
-  export let loggedIn = false;
+  let loggedIn = false;
 
   onMount(async () => {
-    validateToken();
+    validateToken()
+    .then((res) => loggedIn = res);
   });
 
   function search() {
     // TODO: Handle search functionality
-  }
-
-  async function validateToken() {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      loggedIn = false;
-      requireAuth(loggedIn, '/login')
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        `${DEV_URI}/users/validate`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      loggedIn = response.data.isValid;
-    } catch (error) {
-      console.log(error);
-      localStorage.removeItem("token");
-      loggedIn = false;
-    } finally {
-      requireAuth(loggedIn, '/login')
-    }
   }
 
   function logOut() {

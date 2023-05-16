@@ -1,9 +1,28 @@
 <script>
+  // import { onMount } from "svelte";
+  // import { validateToken } from "../auth";
+
   export let card;
+  // let loggedIn = false;
+  // let showModal = false;
+
+  // onMount(() => {
+  //   validateToken()
+  //   .then((res) => loggedIn = res);
+  // })
+
+  // TODO: implement login/continue as guest modal
+  function handleClick() {
+    // if (!loggedIn) {
+    //   showModal = true;
+    // }
+
+    window.location.href = `lobby/${card.title}/${card.url}`;
+  }
 </script>
 
-<a
-  href="lobby/{card.title}/{card.url}"
+<button
+  on:click={handleClick}
   class="bg-white card rounded-lg px-2 py-12 h-64 w-1/4 shadow-lg overflow-hidden"
 >
   <div class="card-image rounded-lg border-2 border-quaternary" />
@@ -13,7 +32,7 @@
       {card.description}
     </p>
   </div>
-</a>
+</button>
 
 <style>
   .card-image {
