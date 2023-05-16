@@ -3,6 +3,7 @@ import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { LobbyGateway } from './lobby.gateway';
 import { TagGateway } from './games/tag.gateway';
+import { GameGateway } from './games/game.gateway';
 
 @Module({
   providers: [
@@ -20,6 +21,7 @@ import { TagGateway } from './games/tag.gateway';
     },
     LobbyGateway,
     TagGateway,
+    GameGateway,
   ],
 })
 export class SocketsModule {}

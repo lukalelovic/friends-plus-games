@@ -15,9 +15,8 @@
   let keys = {};
 
   let socket;
-  let players = [];
   let playerCircles = {};
-  let taggedPlayer;
+  let taggedId;
 
   let canDetectCollisions = true;
 
@@ -42,7 +41,7 @@
   }
 
   function update(stage, layer) {
-    drawPlayers(stage, layer);
+    drawPlayer(stage, layer);
 
     // add event listeners for keydown and keyup events
     window.addEventListener("keydown", handleKeyDown);
@@ -51,55 +50,63 @@
     checkPlayerMovement(stage);
   }
 
-  function drawPlayers(stage, layer) {
+  function drawPlayer(stage, layer) {
     if (!socket) return;
 
-    socket.on("currentState", (listString) => {
-      // Update the local player list with the latest state from the server
-      players = JSON.parse(listString);
+    socket.on("currentState", (player) => {
       checkTagPlayer();
 
-      // Add each player shape to layer
-      players.forEach((player) => {
-        let fill;
-
-        if (taggedPlayer && player.id == taggedPlayer) {
+      let fill;
+      switch (player.id) {
+        case taggedId:
           fill = "red";
-        } else if (player.id == socket.id) {
+          break;
+        case socket.id:
           fill = "green";
-        } else {
+          break;
+        default:
           fill = "blue";
-        }
+      }
 
-        // check if the player's rect already exists in playerCircles
-        if (player.id in playerCircles) {
-          // update the existing rect with the player's new position and color
-          const circ = playerCircles[player.id];
-          circ.setAttrs({
-            x: player.x,
-            y: player.y,
-            fill: fill,
-          });
-          playerCircles[player.id] = circ;
-        } else {
-          // create a new rect for the player and add it to the layer and playerCircles
-          const circ = new Konva.Circle({
-            x: getRandomPos(PLAYER_SIZE, stage.width() - PLAYER_SIZE),
-            y: getRandomPos(PLAYER_SIZE, stage.height() - PLAYER_SIZE),
-            radius: PLAYER_SIZE,
-            fill: fill,
-          });
+      let circ = playerCircles[player.id];
 
-          layer.add(circ);
-          playerCircles[player.id] = circ;
-          socket.emit("movePlayer", lobbyId, socket.id, circ.x(), circ.y());
+      if (circ) { // Circle already exists? Update position
+        circ.setAttrs({
+          x: player.x,
+          y: player.y,
+          fill: fill,
+        });
+      } else { // Else create new
+        circ = new Konva.Circle({
+          x: player.x,
+          y: player.y,
+          radius: PLAYER_SIZE,
+          fill: "green",
+        });
+
+        layer.add(circ);
+
+        // Initialize random x,y pos
+        if (socket.id == player.id) {
+          socket.emit("movePlayer", lobbyId,
+            getRandomPos(PLAYER_SIZE, stage.width() - PLAYER_SIZE), // random x
+            getRandomPos(PLAYER_SIZE, stage.height() - PLAYER_SIZE) // random y
+          );
         }
-      });
+      }
+
+      playerCircles[player.id] = circ;
     });
 
-    // Get the current tagged player
     socket.on("playerTagged", (p) => {
-      taggedPlayer = p;
+      // Tag 3 second cooldown
+      canDetectCollisions = false;
+      setTimeout(() => {
+        canDetectCollisions = true;
+      }, 3000);
+
+      // Check if you are tagged
+      taggedId = p.id;
     });
 
     socket.on("playerLeft", (socketId) => {
@@ -121,63 +128,48 @@
   }
 
   function checkPlayerMovement(stage) {
-    const player = players.find((p) => p.id === socket.id);
-    if (player == undefined) {
-      return;
+    const playerShape = playerCircles[socket.id];
+    if (!playerShape) return;
+
+    let xPos = playerShape.x();
+    let yPos = playerShape.y();
+
+    // Check if any arrow keys are pressed
+    if (keys[37] && xPos > PLAYER_SIZE) {
+      // Left arrow
+      xPos = xPos - MOVE_OFFSET;
+    }
+    if (keys[38] && yPos > PLAYER_SIZE) {
+      // Up arrow
+      yPos = yPos - MOVE_OFFSET;
+    }
+    if (keys[39] && xPos < stage.width() - PLAYER_SIZE) {
+      // Right arrow
+      xPos = xPos + MOVE_OFFSET;
+    }
+    if (keys[40] && yPos < stage.height() - PLAYER_SIZE) {
+      // Down arrow
+      yPos = yPos + MOVE_OFFSET;
     }
 
-    // check if any arrow keys are pressed
-    if (keys[37] && player.x > PLAYER_SIZE) {
-      // left arrow
-      player.x = player.x - MOVE_OFFSET;
+    // Send position to server (if it changed)
+    if (xPos != playerShape.x() || yPos != playerShape.y()) {
+      socket.emit("movePlayer", lobbyId, xPos, yPos);
     }
-    if (keys[38] && player.y > PLAYER_SIZE) {
-      // up arrow
-      player.y = player.y - MOVE_OFFSET;
-    }
-    if (keys[39] && player.x < stage.width() - PLAYER_SIZE) {
-      // right arrow
-      player.x = player.x + MOVE_OFFSET;
-    }
-    if (keys[40] && player.y < stage.height() - PLAYER_SIZE) {
-      // down arrow
-      player.y = player.y + MOVE_OFFSET;
-    }
-
-    // Send the new position to the server
-    socket.emit("movePlayer", lobbyId, socket.id, player.x, player.y);
   }
 
   function checkTagPlayer() {
-    if (!taggedPlayer) {
-      const randPlayer = players[Math.floor(Math.random() * players.length)];
-
-      // Tag player at random (if no one is tagged)
-      socket.emit(
-        "tagPlayer",
-        lobbyId,
-        randPlayer.id
-      );
-
-      taggedPlayer = randPlayer.id;
-    } else if (canDetectCollisions) {
+    if (canDetectCollisions) {
       // Else if you are tagged, check collisions
       const collidedId = detectCollisions(
         playerCircles[socket.id],
         playerCircles
       );
 
-      let youAreIt = (socket.id == taggedPlayer);
-
-      // Collision occurred? Other player is it!
-      if (collidedId) {
-        socket.emit("tagPlayer", lobbyId, (youAreIt) ? collidedId : socket.id);
+      // Collision occurred and you're tagged? Other player is it!
+      if (collidedId && taggedId == socket.id) {
+        socket.emit("tagPlayer", lobbyId, collidedId);
       }
-
-      canDetectCollisions = false;
-      setTimeout(() => {
-        canDetectCollisions = true;
-      }, 3000); // 500-milli-second cooldown period
     }
   }
 

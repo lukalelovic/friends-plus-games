@@ -4,21 +4,19 @@ import {
   SubscribeMessage,
 } from '@nestjs/websockets';
 import { Dependencies } from '@nestjs/common';
-import { TagGateway } from './games/tag.gateway';
+import { GameGateway } from './games/game.gateway';
 import { Player } from '../models/player';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   path: '/lobby',
 })
-@Dependencies(TagGateway)
+@Dependencies(GameGateway)
 export class LobbyGateway {
   @WebSocketServer()
   server: Server;
 
   lobbyMap = new Map<string, Player[]>(); // Contains <lobby id>:<player list>
-
-  constructor(private readonly tagGatway: TagGateway) {}
 
   handleConnection(socket: Socket): void {
     console.log(`Client ${socket.id} connected to the lobby namespace`);
@@ -66,7 +64,7 @@ export class LobbyGateway {
       });
 
       // Update tag map with players
-      this.tagGatway.setPlayerMap(lobbyId, playerMap);
+      GameGateway.setPlayerMap(lobbyId, playerMap);
 
       this.server.to(lobbyId).emit('gameStarted');
       console.log(`Starting ${gameName} game for lobby ${lobbyId}...`);

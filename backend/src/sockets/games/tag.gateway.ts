@@ -6,6 +6,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { Player } from '../../models/player';
+import { GameGateway } from './game.gateway';
 
 @WebSocketGateway({
   path: '/tag',
@@ -14,8 +15,6 @@ import { Player } from '../../models/player';
 export class TagGateway {
   @WebSocketServer()
   server: Server;
-
-  lobbyPlayerMap = new Map<string, Map<string, Player>>(); // Contains <lobbyId>:<player map>
 
   handleConnection(socket: Socket): void {
     console.log(`Client ${socket.id} connected to the game namespace`);
@@ -26,7 +25,9 @@ export class TagGateway {
     const lobbyId = data[0];
     const oldSockId: string = data[1];
 
-    const playerMap: Map<string, Player> = this.lobbyPlayerMap.get(lobbyId);
+    const playerMap: Map<string, Player> =
+      GameGateway.lobbyPlayerMap.get(lobbyId);
+
     if (!playerMap) return;
 
     socket.join(lobbyId);
@@ -40,31 +41,37 @@ export class TagGateway {
     }
 
     // Return lobby players to the socket
-    this.server.to(lobbyId).emit('currentState', this.getPlayerJson(lobbyId));
+    this.server.to(lobbyId).emit('currentState', playerMap.get(socket.id));
     console.log(`Player ${socket.id} joined tag game ${lobbyId}`);
   }
 
   @SubscribeMessage('movePlayer')
   handleMovePlayer(socket: Socket, data: string): void {
     const lobbyId: string = data[0];
-    const playerId: string = data[1];
-    const x = Number(data[2]);
-    const y = Number(data[3]);
+    const x = Number(data[1]);
+    const y = Number(data[2]);
 
-    const playerMap: Map<string, Player> = this.lobbyPlayerMap.get(lobbyId);
+    const playerId: string = socket.id;
+
+    const playerMap: Map<string, Player> =
+      GameGateway.lobbyPlayerMap.get(lobbyId);
+
     if (!playerMap) return;
 
     // Update the player's position in the players map
-    const player: Player = playerMap.get(playerId);
+    let player: Player = playerMap.get(playerId);
     if (player) {
       player.x = x;
       player.y = y;
+    } else {
+      player = new Player(socket.id, x, y);
     }
+
     playerMap.set(playerId, player);
-    this.setPlayerMap(lobbyId, playerMap);
+    GameGateway.setPlayerMap(lobbyId, playerMap);
 
     // Broadcast the new state to all connected clients
-    this.server.to(lobbyId).emit('currentState', this.getPlayerJson(lobbyId));
+    this.server.to(lobbyId).emit('currentState', playerMap.get(playerId));
   }
 
   @SubscribeMessage('tagPlayer')
@@ -74,8 +81,8 @@ export class TagGateway {
 
     // Lobby exists and player is in it? Emit tagged player ID
     if (
-      this.lobbyPlayerMap.has(lobbyId) &&
-      this.lobbyPlayerMap.get(lobbyId).has(tagId)
+      GameGateway.lobbyPlayerMap.has(lobbyId) &&
+      GameGateway.lobbyPlayerMap.get(lobbyId).has(tagId)
     ) {
       this.server.to(lobbyId).emit('playerTagged', tagId);
       console.log(`Player ${tagId} in game ${lobbyId} was tagged!`);
@@ -90,7 +97,7 @@ export class TagGateway {
     let playerMap = new Map<string, Player>();
 
     // Find the current player's lobby
-    for (const [id, map] of this.lobbyPlayerMap.entries()) {
+    for (const [id, map] of GameGateway.lobbyPlayerMap.entries()) {
       if (map.has(socket.id)) {
         playerMap = map;
         lobbyId = id;
@@ -105,7 +112,7 @@ export class TagGateway {
       playerMap.delete(socket.id);
     }
 
-    this.setPlayerMap(lobbyId, playerMap);
+    GameGateway.setPlayerMap(lobbyId, playerMap);
     this.server.to(lobbyId).emit('playerLeft', socket.id);
     console.log(`Socket ${socket.id} disconnected from game namespace`);
 
@@ -113,15 +120,5 @@ export class TagGateway {
     if (playerMap.size == 0) {
       console.log(`Game session ${lobbyId} ended`);
     }
-  }
-
-  setPlayerMap(lobbyId: string, playerMap: Map<string, Player>): void {
-    this.lobbyPlayerMap.set(lobbyId, playerMap);
-  }
-
-  getPlayerJson(lobbyId): string {
-    return JSON.stringify(
-      Array.from(this.lobbyPlayerMap.get(lobbyId).values()),
-    );
   }
 }
