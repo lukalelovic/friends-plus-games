@@ -1,6 +1,6 @@
 <script>
   import axios from "axios";
-  import { DEV_URI } from "../config";
+  import { PROD_URI } from "../config";
   import { navigate } from "svelte-routing";
 
   let username = "";
@@ -8,7 +8,7 @@
 
   async function handleSubmit() {
     try {
-      const response = await axios.post(`${DEV_URI}/users/login`, {
+      const response = await axios.post(`${PROD_URI}/users/login`, {
         username: username,
         password: password,
       });

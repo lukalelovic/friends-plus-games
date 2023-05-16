@@ -1,6 +1,6 @@
 <script>
   import axios from "axios";
-  import { DEV_URI } from "../config";
+  import { PROD_URI } from "../config";
   import { navigate } from "svelte-routing";
 
   let username = "";
@@ -12,7 +12,7 @@
     if (password !== confirmPassword) return;
 
     try {
-      const response = await axios.post(`${DEV_URI}/users/signup`, {
+      const response = await axios.post(`${PROD_URI}/users/signup`, {
         username: username,
         email: email,
         password: password,

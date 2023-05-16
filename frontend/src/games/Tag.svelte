@@ -4,7 +4,7 @@
   import { io } from "socket.io-client";
   import Game from "../pages/Game.svelte";
   import { detectCollisions } from "./detectCollisions";
-  import { DEV_URI } from "../config";
+  import { PROD_SOCKET_URI } from "../config";
 
   let lobbyId, oldSocketId;
 
@@ -22,7 +22,7 @@
   let canDetectCollisions = true;
 
   onMount(() => {
-    socket = io(DEV_URI, {
+    socket = io(PROD_SOCKET_URI, {
       path: "/tag",
       transports: ["websocket"],
     });

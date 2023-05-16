@@ -1,5 +1,5 @@
 import axios from "axios";
-import { DEV_URI } from "./config";
+import { PROD_URI } from "./config";
 
 export async function validateToken() {
   let loggedIn = false;
@@ -11,7 +11,7 @@ export async function validateToken() {
   
   try {
     const response = await axios.post(
-      `${DEV_URI}/users/validate`,
+      `${PROD_URI}/users/validate`,
       {},
       {
         headers: {
