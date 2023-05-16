@@ -1,8 +1,9 @@
-name: CI/CD deployment to EC2
+name: Deploy to EC2
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -11,22 +12,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        env:
-          PRIVATE_KEY: ${{ secrets.AWS_PRIVATE_KEY }}
-          HOSTNAME: ${{ secrets.HOSTNAME }}
-          USER_NAME: ${{ secrets.USER_NAME }}
 
-      - name: SSH and Deploy
-        run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
-            cd games-with-friends &&
-            cd frontend &&
-            npm install &&
-            npm run build &&
-            cd ../backend &&
-            npm install &&
-            npm run build &&
-            pm2 restart backend &&
-            sudo service nginx restart
-          '
+      - name: SSH into EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.HOSTNAME }}
+          username: ${{ secrets.USER_NAME }}
+          key: ${{ secrets.AWS_PRIVATE_KEY }}
+          port: 22
+        script: |
+          cd games-with-friends && git pull origin master &&
+          cd frontend && npm run build &&
+          cd ../backend && npm run build && pm2 restart backend &&
+          sudo service nginx restart
