@@ -5,20 +5,22 @@
   import Game from "../pages/Game.svelte";
   import { detectCollisions } from "./detectCollisions";
   import { PROD_SOCKET_URI, TAG_PATH } from "../config";
+  import { Keyboard } from "./Keyboard";
 
   let lobbyId, oldSocketId;
 
   const JOIN_WAIT = 150;
-  const MOVE_OFFSET = 5;
+  const MOVE_OFFSET = 10;
   const PLAYER_SIZE = 50;
+  const FIXED_DELAY = 50;
 
-  let keys = {};
-
+  let keyboard = new Keyboard();
   let socket;
   let playerCircles = {};
   let taggedId;
 
   let canDetectCollisions = true;
+  let canSendMovementUpdate = true;
 
   onMount(() => {
     socket = io(PROD_SOCKET_URI, {
@@ -42,11 +44,6 @@
 
   function update(stage, layer) {
     drawPlayer(stage, layer);
-
-    // add event listeners for keydown and keyup events
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
     checkPlayerMovement(stage);
   }
 
@@ -57,26 +54,26 @@
       checkTagPlayer();
 
       let fill;
-      switch (player.id) {
-        case taggedId:
-          fill = "red";
-          break;
-        case socket.id:
-          fill = "green";
-          break;
-        default:
-          fill = "blue";
+
+      if (player.id == taggedId) {
+        fill = "red";
+      } else if (player.id == socket.id) {
+        fill = "green";
+      } else {
+        fill = "blue";
       }
 
       let circ = playerCircles[player.id];
 
-      if (circ) { // Circle already exists? Update position
+      if (circ) {
+        // Circle already exists? Update position
         circ.setAttrs({
           x: player.x,
           y: player.y,
           fill: fill,
         });
-      } else { // Else create new
+      } else {
+        // Else create new
         circ = new Konva.Circle({
           x: player.x,
           y: player.y,
@@ -88,7 +85,9 @@
 
         // Initialize random x,y pos
         if (socket.id == player.id) {
-          socket.emit("movePlayer", lobbyId,
+          socket.emit(
+            "movePlayer",
+            lobbyId,
             getRandomPos(PLAYER_SIZE, stage.width() - PLAYER_SIZE), // random x
             getRandomPos(PLAYER_SIZE, stage.height() - PLAYER_SIZE) // random y
           );
@@ -99,13 +98,12 @@
     });
 
     socket.on("playerTagged", (p) => {
-      // Tag 3 second cooldown
+      // 3 second cooldown (for everyone)
       canDetectCollisions = false;
       setTimeout(() => {
         canDetectCollisions = true;
       }, 3000);
 
-      // Check if you are tagged
       taggedId = p.id;
     });
 
@@ -119,14 +117,6 @@
     });
   }
 
-  function handleKeyDown(event) {
-    keys[event.keyCode] = true;
-  }
-
-  function handleKeyUp(event) {
-    keys[event.keyCode] = false;
-  }
-
   function checkPlayerMovement(stage) {
     const playerShape = playerCircles[socket.id];
     if (!playerShape) return;
@@ -135,40 +125,60 @@
     let yPos = playerShape.y();
 
     // Check if any arrow keys are pressed
-    if (keys[37] && xPos > PLAYER_SIZE) {
+    if (keyboard.isKeyPressed(37) && xPos > PLAYER_SIZE) {
       // Left arrow
       xPos = xPos - MOVE_OFFSET;
     }
-    if (keys[38] && yPos > PLAYER_SIZE) {
+    if (keyboard.isKeyPressed(38) && yPos > PLAYER_SIZE) {
       // Up arrow
       yPos = yPos - MOVE_OFFSET;
     }
-    if (keys[39] && xPos < stage.width() - PLAYER_SIZE) {
+    if (keyboard.isKeyPressed(39) && xPos < stage.width() - PLAYER_SIZE) {
       // Right arrow
       xPos = xPos + MOVE_OFFSET;
     }
-    if (keys[40] && yPos < stage.height() - PLAYER_SIZE) {
+    if (keyboard.isKeyPressed(40) && yPos < stage.height() - PLAYER_SIZE) {
       // Down arrow
       yPos = yPos + MOVE_OFFSET;
     }
 
     // Send position to server (if it changed)
-    if (xPos != playerShape.x() || yPos != playerShape.y()) {
+    if (canSendMovementUpdate && (xPos != playerShape.x() || yPos != playerShape.y())) {
       socket.emit("movePlayer", lobbyId, xPos, yPos);
+      canSendMovementUpdate = false;
+
+      setTimeout(() => {
+        canSendMovementUpdate = true;
+      }, FIXED_DELAY);
     }
+
+    // Interpolate shape position
+    playerCircles[socket.id].setAttrs({
+      x: xPos,
+      y: yPos
+    });
   }
 
   function checkTagPlayer() {
-    if (canDetectCollisions) {
-      // Else if you are tagged, check collisions
+    if (!taggedId) {
+      let pIds = Object.keys(playerCircles);
+      let randId = pIds[Math.floor(Math.random() * pIds.length)];
+
+      socket.emit("tagPlayer", lobbyId, randId);
+      taggedId = randId;
+    }
+    
+    if (canDetectCollisions && taggedId == socket.id) {
+      // If you are tagged and delay has passed, check collisions
       const collidedId = detectCollisions(
-        playerCircles[socket.id],
-        playerCircles
+        playerCircles[socket.id], // current shape
+        playerCircles // all shapes
       );
 
-      // Collision occurred and you're tagged? Other player is it!
-      if (collidedId && taggedId == socket.id) {
+      // Collision occurred? Other player is it!
+      if (collidedId) {
         socket.emit("tagPlayer", lobbyId, collidedId);
+        canDetectCollisions = false;
       }
     }
   }
@@ -178,9 +188,7 @@
   }
 
   onDestroy(() => {
-    // remove the event listeners when the component is destroyed
-    window.removeEventListener("keydown", handleKeyDown);
-    window.removeEventListener("keyup", handleKeyUp);
+    keyboard.cleanup();
   });
 </script>
 

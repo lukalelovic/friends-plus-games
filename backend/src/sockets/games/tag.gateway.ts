@@ -15,6 +15,7 @@ import { GameGateway } from './game.gateway';
 export class TagGateway {
   @WebSocketServer()
   server: Server;
+  readonly SEND_DELAY: number = 20;
 
   handleConnection(socket: Socket): void {
     console.log(`Client ${socket.id} connected to the game namespace`);
