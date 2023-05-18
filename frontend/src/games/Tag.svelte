@@ -10,7 +10,7 @@
   let lobbyId, oldSocketId;
 
   const JOIN_WAIT = 150;
-  const MOVE_OFFSET = 10;
+  const MOVE_OFFSET = 20;
   const PLAYER_SIZE = 50;
   const FIXED_DELAY = 50;
 
@@ -19,7 +19,6 @@
   let playerCircles = {};
   let taggedId;
 
-  let canDetectCollisions = true;
   let canSendMovementUpdate = true;
 
   onMount(() => {
@@ -45,14 +44,13 @@
   function update(stage, layer) {
     drawPlayer(stage, layer);
     checkPlayerMovement(stage);
+    checkTagPlayer();
   }
 
   function drawPlayer(stage, layer) {
     if (!socket) return;
 
     socket.on("currentState", (player) => {
-      checkTagPlayer();
-
       let fill;
 
       if (player.id == taggedId) {
@@ -63,48 +61,31 @@
         fill = "blue";
       }
 
-      let circ = playerCircles[player.id];
-
-      if (circ) {
-        // Circle already exists? Update position
-        circ.setAttrs({
-          x: player.x,
-          y: player.y,
-          fill: fill,
-        });
-      } else {
-        // Else create new
-        circ = new Konva.Circle({
-          x: player.x,
-          y: player.y,
-          radius: PLAYER_SIZE,
-          fill: "green",
-        });
-
-        layer.add(circ);
-
-        // Initialize random x,y pos
-        if (socket.id == player.id) {
-          socket.emit(
-            "movePlayer",
-            lobbyId,
-            getRandomPos(PLAYER_SIZE, stage.width() - PLAYER_SIZE), // random x
-            getRandomPos(PLAYER_SIZE, stage.height() - PLAYER_SIZE) // random y
-          );
-        }
-      }
-
-      playerCircles[player.id] = circ;
+      updateShape(stage, layer, player.id, player.x, player.y, fill);
     });
 
-    socket.on("playerTagged", (p) => {
-      // 3 second cooldown (for everyone)
-      canDetectCollisions = false;
-      setTimeout(() => {
-        canDetectCollisions = true;
-      }, 3000);
+    socket.on("playerTagged", (newId) => {
+      if (taggedId) {
+        updateShape(
+          stage,
+          layer,
+          taggedId,
+          playerCircles[taggedId].x(),
+          playerCircles[taggedId].y(),
+          taggedId == socket.id ? "green" : "blue"
+        );
+      }
 
-      taggedId = p.id;
+      updateShape(
+        stage,
+        layer,
+        newId,
+        playerCircles[newId].x(),
+        playerCircles[newId].y(),
+        "red"
+      );
+
+      taggedId = newId;
     });
 
     socket.on("playerLeft", (socketId) => {
@@ -143,7 +124,10 @@
     }
 
     // Send position to server (if it changed)
-    if (canSendMovementUpdate && (xPos != playerShape.x() || yPos != playerShape.y())) {
+    if (
+      canSendMovementUpdate &&
+      (xPos != playerShape.x() || yPos != playerShape.y())
+    ) {
       socket.emit("movePlayer", lobbyId, xPos, yPos);
       canSendMovementUpdate = false;
 
@@ -151,36 +135,69 @@
         canSendMovementUpdate = true;
       }, FIXED_DELAY);
     }
-
-    // Interpolate shape position
-    playerCircles[socket.id].setAttrs({
-      x: xPos,
-      y: yPos
-    });
   }
 
   function checkTagPlayer() {
     if (!taggedId) {
+      console.log(taggedId);
       let pIds = Object.keys(playerCircles);
       let randId = pIds[Math.floor(Math.random() * pIds.length)];
 
       socket.emit("tagPlayer", lobbyId, randId);
       taggedId = randId;
     }
-    
-    if (canDetectCollisions && taggedId == socket.id) {
-      // If you are tagged and delay has passed, check collisions
-      const collidedId = detectCollisions(
-        playerCircles[socket.id], // current shape
-        playerCircles // all shapes
-      );
 
-      // Collision occurred? Other player is it!
-      if (collidedId) {
-        socket.emit("tagPlayer", lobbyId, collidedId);
-        canDetectCollisions = false;
+    // If you are tagged and delay has passed, check collisions
+    const collidedId = detectCollisions(
+      playerCircles[socket.id], // current shape
+      playerCircles // all shapes
+    );
+
+    // Collision occurred? Other player is it!
+    if (collidedId) {
+      // If I'm not 'it' and I collided with the tagged player
+      if (taggedId != socket.id && collidedId == taggedId) {
+        socket.emit("tagPlayer", lobbyId, socket.id); // I'm 'it'
+      } else if (taggedId == socket.id) {
+        // Else if I am 'it' and I collided with someone
+        socket.emit("tagPlayer", lobbyId, collidedId); // Other person is 'it'
       }
     }
+  }
+
+  function updateShape(stage, layer, id, x, y, fill) {
+    let circ = playerCircles[id];
+
+    if (!circ) {
+      // Create new
+      circ = new Konva.Circle({
+        x: x,
+        y: y,
+        radius: PLAYER_SIZE,
+        fill: "green",
+      });
+
+      layer.add(circ);
+
+      // Initialize random x,y pos
+      if (socket.id == id) {
+        socket.emit(
+          "movePlayer",
+          lobbyId,
+          getRandomPos(PLAYER_SIZE, stage.width() - PLAYER_SIZE), // random x
+          getRandomPos(PLAYER_SIZE, stage.height() - PLAYER_SIZE) // random y
+        );
+      }
+    } else {
+      // Else update
+      circ.setAttrs({
+        x: x,
+        y: y,
+        fill: fill,
+      });
+    }
+
+    playerCircles[id] = circ;
   }
 
   function getRandomPos(min, max) {

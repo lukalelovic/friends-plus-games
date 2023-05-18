@@ -16,6 +16,7 @@ export class TagGateway {
   @WebSocketServer()
   server: Server;
   readonly SEND_DELAY: number = 20;
+  canTagMap = new Map<string, boolean>(); // <lobby id>:<canTag>
 
   handleConnection(socket: Socket): void {
     console.log(`Client ${socket.id} connected to the game namespace`);
@@ -32,6 +33,9 @@ export class TagGateway {
     if (!playerMap) return;
 
     socket.join(lobbyId);
+    if (!this.canTagMap.has(lobbyId)) {
+      this.canTagMap.set(lobbyId, true);
+    }
 
     // Update socket mapping
     if (playerMap.has(oldSockId)) {
@@ -83,10 +87,16 @@ export class TagGateway {
     // Lobby exists and player is in it? Emit tagged player ID
     if (
       GameGateway.lobbyPlayerMap.has(lobbyId) &&
-      GameGateway.lobbyPlayerMap.get(lobbyId).has(tagId)
+      GameGateway.lobbyPlayerMap.get(lobbyId).has(tagId) &&
+      this.canTagMap.get(lobbyId) == true
     ) {
       this.server.to(lobbyId).emit('playerTagged', tagId);
       console.log(`Player ${tagId} in game ${lobbyId} was tagged!`);
+      this.canTagMap.set(lobbyId, false);
+      // Tag cooldown for 3 seconds
+      setTimeout(() => {
+        this.canTagMap.set(lobbyId, true);
+      }, 3000);
     } else {
       console.error(`Player ${tagId} in game ${lobbyId} not found`);
     }
