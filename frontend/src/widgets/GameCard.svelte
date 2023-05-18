@@ -23,7 +23,7 @@
 
 <button
   on:click={handleClick}
-  class="bg-white card rounded-lg px-2 py-12 h-64 w-1/4 shadow-lg overflow-hidden"
+  class="bg-white card rounded-lg px-2 py-12 h-64 w-64 sm:w-1/4 shadow-lg overflow-hidden"
 >
   <div class="card-image rounded-lg border-2 border-quaternary" />
   <div class="card-content flex-1">

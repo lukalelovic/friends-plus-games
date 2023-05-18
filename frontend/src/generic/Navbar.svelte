@@ -28,7 +28,7 @@
       <div class="relative">
         <input
           type="text"
-          class="bg-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:shadow-outline"
+          class="bg-gray-200 w-0 sm:w-fit rounded-lg px-4 py-2 focus:outline-none focus:shadow-outline"
           placeholder="Search for Games..."
           on:input={search}
         />
@@ -58,7 +58,7 @@
             Login
           </a>
         </div>
-        <div class="ml-4">
+        <div class="ml-4 whitespace-nowrap">
           <a
             href="/signup"
             class="bg-quaternary hover:text-gray-200 text-white font-bold py-2 px-4 rounded"
