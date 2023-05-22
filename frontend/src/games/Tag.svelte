@@ -9,16 +9,19 @@
 
   let lobbyId, oldSocketId;
 
-  const JOIN_WAIT = 150;
+  const WIDTH = 1280;
+  const HEIGHT = 640;
+
   const MOVE_OFFSET = 20;
   const PLAYER_SIZE = 50;
-  const FIXED_DELAY = 50;
+  const FIXED_DELAY = 15;
 
   let keyboard = new Keyboard();
+
   let socket;
+
   let playerCircles = {};
   let taggedId;
-
   let canSendMovementUpdate = true;
 
   onMount(() => {
@@ -27,28 +30,56 @@
       transports: ["websocket"],
     });
 
-    setTimeout(() => {
-      const url = new URL(window.location.href);
+    // Connecte to the server
+    socket.on('connect', () => {
+      console.log('Connected to server');
 
-      lobbyId = url.pathname.substring(url.pathname.lastIndexOf("/") + 1);
-      oldSocketId = url.searchParams.get("player");
-
-      socket.emit("joinGame", lobbyId, oldSocketId);
-    }, JOIN_WAIT);
+      joinGame();
+    });
   });
 
-  function start(stage, layer) {
+  function start() {
     // Any initialization logic
   }
 
   function update(stage, layer) {
-    drawPlayer(stage, layer);
-    checkPlayerMovement(stage);
+    updatePlayers(stage, layer);
+
+    checkPlayerMovement();
     checkTagPlayer();
   }
 
-  function drawPlayer(stage, layer) {
+  function joinGame() {
+    const url = new URL(window.location.href);
+
+    lobbyId = url.pathname.substring(url.pathname.lastIndexOf("/") + 1);
+    oldSocketId = url.searchParams.get("player");
+
+    socket.emit("joinGame", lobbyId, oldSocketId);
+  }
+
+  function updatePlayers(stage, layer) {
     if (!socket) return;
+
+    // Create new player shape
+    socket.on("playerJoined", (player) => {
+      if (player.id in playerCircles) return;
+
+      const fill = player.id == socket.id ? "green" : "blue";
+
+      const circ = new Konva.Circle({
+        x: getRandomPos(PLAYER_SIZE, WIDTH - PLAYER_SIZE), // random x
+        y: getRandomPos(PLAYER_SIZE, HEIGHT - PLAYER_SIZE), // random y
+        radius: PLAYER_SIZE,
+        fill: fill,
+      });
+
+      layer.add(circ);
+      playerCircles[player.id] = circ;
+
+      // Initialize random x,y pos
+      socket.emit("movePlayer", lobbyId, circ.x(), circ.y());
+    });
 
     socket.on("currentState", (player) => {
       let fill;
@@ -61,14 +92,13 @@
         fill = "blue";
       }
 
-      updateShape(stage, layer, player.id, player.x, player.y, fill);
+      updateShape(player.id, player.x, player.y, fill);
     });
 
     socket.on("playerTagged", (newId) => {
+      // Update previously tagged player (if any)
       if (taggedId) {
         updateShape(
-          stage,
-          layer,
           taggedId,
           playerCircles[taggedId].x(),
           playerCircles[taggedId].y(),
@@ -76,15 +106,15 @@
         );
       }
 
+      // Update color of newly tagged player
       updateShape(
-        stage,
-        layer,
         newId,
         playerCircles[newId].x(),
         playerCircles[newId].y(),
         "red"
       );
 
+      // Store newly tagged ID
       taggedId = newId;
     });
 
@@ -98,7 +128,7 @@
     });
   }
 
-  function checkPlayerMovement(stage) {
+  function checkPlayerMovement() {
     const playerShape = playerCircles[socket.id];
     if (!playerShape) return;
 
@@ -114,11 +144,11 @@
       // Up arrow
       yPos = yPos - MOVE_OFFSET;
     }
-    if (keyboard.isKeyPressed(39) && xPos < stage.width() - PLAYER_SIZE) {
+    if (keyboard.isKeyPressed(39) && xPos < WIDTH - PLAYER_SIZE) {
       // Right arrow
       xPos = xPos + MOVE_OFFSET;
     }
-    if (keyboard.isKeyPressed(40) && yPos < stage.height() - PLAYER_SIZE) {
+    if (keyboard.isKeyPressed(40) && yPos < HEIGHT - PLAYER_SIZE) {
       // Down arrow
       yPos = yPos + MOVE_OFFSET;
     }
@@ -139,7 +169,6 @@
 
   function checkTagPlayer() {
     if (!taggedId) {
-      console.log(taggedId);
       let pIds = Object.keys(playerCircles);
       let randId = pIds[Math.floor(Math.random() * pIds.length)];
 
@@ -165,38 +194,16 @@
     }
   }
 
-  function updateShape(stage, layer, id, x, y, fill) {
-    let circ = playerCircles[id];
+  function updateShape(id, x, y, fill) {
+    const circ = playerCircles[id];
+    if (!circ) return;
 
-    if (!circ) {
-      // Create new
-      circ = new Konva.Circle({
-        x: x,
-        y: y,
-        radius: PLAYER_SIZE,
-        fill: "green",
-      });
-
-      layer.add(circ);
-
-      // Initialize random x,y pos
-      if (socket.id == id) {
-        socket.emit(
-          "movePlayer",
-          lobbyId,
-          getRandomPos(PLAYER_SIZE, stage.width() - PLAYER_SIZE), // random x
-          getRandomPos(PLAYER_SIZE, stage.height() - PLAYER_SIZE) // random y
-        );
-      }
-    } else {
-      // Else update
-      circ.setAttrs({
-        x: x,
-        y: y,
-        fill: fill,
-      });
-    }
-
+    circ.setAttrs({
+      fill: fill,
+      x: x,
+      y: y,
+    });
+    
     playerCircles[id] = circ;
   }
 
@@ -209,4 +216,4 @@
   });
 </script>
 
-<Game background="black" width={1280} height={640} {start} {update} />
+<Game background="black" width={WIDTH} height={HEIGHT} {start} {update} />

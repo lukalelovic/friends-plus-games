@@ -3,13 +3,6 @@
   // import { validateToken } from "../auth";
 
   export let card;
-  // let loggedIn = false;
-  // let showModal = false;
-
-  // onMount(() => {
-  //   validateToken()
-  //   .then((res) => loggedIn = res);
-  // })
 
   // TODO: implement login/continue as guest modal
   function handleClick() {
@@ -17,29 +10,25 @@
     //   showModal = true;
     // }
 
-    window.location.href = `lobby/${card.title}/${card.url}`;
+    window.location.href = `lobby/${card.title}/`+generateLobbyID();
+  }
+
+  function generateLobbyID() {
+    // TODO: a check with backend DB for used lobbies
+    // Generate a random ID for the lobby
+    return Math.random().toString(36).substring(2, 8);
   }
 </script>
 
 <button
   on:click={handleClick}
-  class="bg-white card rounded-lg px-2 py-12 h-64 w-64 sm:w-1/4 shadow-lg overflow-hidden"
->
-  <div class="card-image rounded-lg border-2 border-quaternary" />
-  <div class="card-content flex-1">
-    <div class="font-bold text-xl my-2">{card.title}</div>
-    <p class="text-gray-700 text-base">
+  class="max-w-sm rounded overflow-hidden shadow-lg bg-secondary">
+  <img src={card.gameImage} alt="Game Image" class="w-full">
+  
+  <div class="px-6 py-4 text-white">
+    <div class="font-bold text-xl mb-2">{card.title}</div>
+    <p class="text-base">
       {card.description}
     </p>
   </div>
 </button>
-
-<style>
-  .card-image {
-    width: 100%;
-    height: 75%;
-    background-image: url("https://via.placeholder.com/500x500.png?text=Game+Image");
-    background-size: cover;
-    background-position: center;
-  }
-</style>

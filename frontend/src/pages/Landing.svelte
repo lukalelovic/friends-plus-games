@@ -1,24 +1,29 @@
 <script>
-    import Navbar from "../generic/Navbar.svelte";
-    import GameCard from "../widgets/GameCard.svelte";
+  import { onMount } from "svelte";
+  import Navbar from "../generic/Navbar.svelte";
+  import GameCard from "../widgets/GameCard.svelte";
+  import axios from "axios";
+  import { PROD_URI } from "../config";
 
-    const cards = [
-        { title: "Tag", description: "Play tag with your friends!", url: generateLobbyID() },
-    ];
+  let cards = [];
 
-    function generateLobbyID() { // TODO: a check with backend DB for used lobbies
-        // Generate a random ID for the lobby
-        return Math.random().toString(36).substring(2, 8);
-    }
+  onMount(() => {
+    axios
+      .get(`${PROD_URI}/games/all`)
+      .then((res) => {
+        cards = res.data;
+      })
+      .catch((err) => console.error(err));
+  });
 </script>
 
 <div class="min-h-screen flex flex-col">
-    <Navbar />
-    <div class="gradient-background flex-1 flex flex-col items-center">
-        <div class="min-w-full flex flex-wrap mt-4 justify-center space-x-4">
-            {#each cards as card}
-                <GameCard card={card} />
-            {/each}
-        </div>
+  <Navbar />
+  <div class="gradient-background flex-1 flex flex-col items-center">
+    <div class="min-w-full flex flex-wrap mt-4 justify-center space-x-4">
+      {#each cards as card}
+        <GameCard {card} />
+      {/each}
     </div>
+  </div>
 </div>

@@ -25,6 +25,7 @@ jobs:
           script: |
             cd games-with-friends && git reset --hard &&
             git pull origin master &&
-            cd frontend && npm run build &&
-            cd ../backend && npm run build && pm2 restart backend &&
+            cd frontend && npm i && npm run build &&
+            cd ../backend && npm i && npm run build && 
+            pm2 restart backend &&
             sudo service nginx restart

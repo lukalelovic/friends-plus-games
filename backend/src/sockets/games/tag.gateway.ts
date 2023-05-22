@@ -46,7 +46,7 @@ export class TagGateway {
     }
 
     // Return lobby players to the socket
-    this.server.to(lobbyId).emit('currentState', playerMap.get(socket.id));
+    this.server.to(lobbyId).emit('playerJoined', playerMap.get(socket.id));
     console.log(`Player ${socket.id} joined tag game ${lobbyId}`);
   }
 

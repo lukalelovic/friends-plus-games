@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
+import { UserController } from './controllers/user.controller';
+import { UserService } from './services/user.service';
 import { User } from './entities/user.entity';
 import { ConfigModule } from '@nestjs/config';
 import { SocketsModule } from './sockets/sockets.module';
 import { JwtModule } from '@nestjs/jwt';
+import { Game } from './entities/game.entity';
+import { GameController } from './controllers/game.controller';
+import { GameService } from './services/game.service';
 
 @Module({
   imports: [
@@ -23,11 +26,11 @@ import { JwtModule } from '@nestjs/jwt';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       synchronize: true,
-      entities: [User],
+      entities: [User, Game],
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Game]),
   ],
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [UserController, GameController],
+  providers: [UserService, GameService],
 })
 export class AppModule {}
