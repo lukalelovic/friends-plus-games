@@ -12,7 +12,7 @@
   const WIDTH = 1280;
   const HEIGHT = 640;
 
-  const MOVE_OFFSET = 20;
+  const MOVE_OFFSET = 10;
   const PLAYER_SIZE = 50;
 
   let keyboard = new Keyboard();

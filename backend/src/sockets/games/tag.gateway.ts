@@ -18,7 +18,8 @@ export class TagGateway implements OnGatewayInit {
   server: Server;
   readonly SEND_DELAY: number = 20;
   canTagMap = new Map<string, boolean>(); // <lobby id>:<canTag>
-  private readonly TICK_RATE: 30;
+
+  private readonly TICK_RATE: number = 30;
 
   afterInit(server: any) {
     server.engine.pingInterval = this.TICK_RATE;
