@@ -25,7 +25,7 @@
 <div
   class="flex flex-col h-screen justify-center items-center bg-gradient-to-t from-primary to-tertiary"
 >
-  <h1 class="text-4xl font-bold text-white mb-10">Games with Friends</h1>
+  <img class="w-96 m-0 p-1" src="/logo.svg" alt="Games with Friends" />
   <form
     class="bg-white shadow-md rounded w-1/2 px-8 pt-6 pb-8 mb-4"
     on:submit|preventDefault={handleSubmit}

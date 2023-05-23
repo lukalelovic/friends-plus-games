@@ -22,7 +22,7 @@
 
 <button
   on:click={handleClick}
-  class="max-w-sm rounded overflow-hidden shadow-lg bg-secondary">
+  class="max-w-sm rounded overflow-hidden shadow-lg bg-secondary hover:shadow-2xl">
   <img src={card.gameImage} alt="Game Image" class="w-full">
   
   <div class="px-6 py-4 text-white">

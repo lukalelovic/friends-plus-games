@@ -15,4 +15,10 @@ export class Game {
 
   @Column({ type: 'varchar', nullable: true })
   gameImage: string;
+
+  @Column()
+  isExternal: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  externalURL: string;
 }

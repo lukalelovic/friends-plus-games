@@ -14,7 +14,6 @@
 
   const MOVE_OFFSET = 20;
   const PLAYER_SIZE = 50;
-  const FIXED_DELAY = 15;
 
   let keyboard = new Keyboard();
 
@@ -22,7 +21,6 @@
 
   let playerCircles = {};
   let taggedId;
-  let canSendMovementUpdate = true;
 
   onMount(() => {
     socket = io(PROD_SOCKET_URI, {
@@ -154,17 +152,7 @@
     }
 
     // Send position to server (if it changed)
-    if (
-      canSendMovementUpdate &&
-      (xPos != playerShape.x() || yPos != playerShape.y())
-    ) {
-      socket.emit("movePlayer", lobbyId, xPos, yPos);
-      canSendMovementUpdate = false;
-
-      setTimeout(() => {
-        canSendMovementUpdate = true;
-      }, FIXED_DELAY);
-    }
+    socket.emit("movePlayer", lobbyId, xPos, yPos);
   }
 
   function checkTagPlayer() {

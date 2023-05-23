@@ -2,6 +2,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
@@ -12,11 +13,16 @@ import { GameGateway } from './game.gateway';
   path: '/tag',
 })
 @Injectable()
-export class TagGateway {
+export class TagGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
   readonly SEND_DELAY: number = 20;
   canTagMap = new Map<string, boolean>(); // <lobby id>:<canTag>
+  private readonly TICK_RATE: 30;
+
+  afterInit(server: any) {
+    server.engine.pingInterval = this.TICK_RATE;
+  }
 
   handleConnection(socket: Socket): void {
     console.log(`Client ${socket.id} connected to the game namespace`);
