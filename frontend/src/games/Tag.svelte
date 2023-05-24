@@ -6,14 +6,16 @@
   import { detectCollisions } from "./detectCollisions";
   import { PROD_SOCKET_URI, TAG_PATH } from "../config";
   import { Keyboard } from "./Keyboard";
+  import { joinGame } from "./joinGame";
 
-  let lobbyId, oldSocketId;
+  let lobbyId;
 
   const WIDTH = 1280;
   const HEIGHT = 640;
 
-  const MOVE_OFFSET = 10;
+  const MOVE_OFFSET = 50;
   const PLAYER_SIZE = 50;
+  let canMove = true;
 
   let keyboard = new Keyboard();
 
@@ -31,12 +33,11 @@
     // Connecte to the server
     socket.on('connect', () => {
       console.log('Connected to server');
-
-      joinGame();
+      lobbyId = joinGame(socket);
     });
   });
 
-  function start() {
+  function start(stage, layer) {
     // Any initialization logic
   }
 
@@ -45,15 +46,6 @@
 
     checkPlayerMovement();
     checkTagPlayer();
-  }
-
-  function joinGame() {
-    const url = new URL(window.location.href);
-
-    lobbyId = url.pathname.substring(url.pathname.lastIndexOf("/") + 1);
-    oldSocketId = url.searchParams.get("player");
-
-    socket.emit("joinGame", lobbyId, oldSocketId);
   }
 
   function updatePlayers(stage, layer) {
@@ -127,6 +119,8 @@
   }
 
   function checkPlayerMovement() {
+    if (!canMove) return;
+
     const playerShape = playerCircles[socket.id];
     if (!playerShape) return;
 
@@ -150,9 +144,14 @@
       // Down arrow
       yPos = yPos + MOVE_OFFSET;
     }
-
+    
     // Send position to server (if it changed)
     socket.emit("movePlayer", lobbyId, xPos, yPos);
+
+    canMove = false;
+    setTimeout(() => {
+      canMove = true;
+    }, 150);
   }
 
   function checkTagPlayer() {

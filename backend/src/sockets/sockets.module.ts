@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { LobbyGateway } from './lobby.gateway';
 import { TagGateway } from './games/tag.gateway';
 import { GameGateway } from './games/game.gateway';
+import { MafiaGateway } from './games/mafia.gateway';
 
 @Module({
   providers: [
@@ -21,6 +22,7 @@ import { GameGateway } from './games/game.gateway';
     },
     LobbyGateway,
     TagGateway,
+    MafiaGateway,
     GameGateway,
   ],
 })

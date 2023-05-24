@@ -10,15 +10,14 @@ import { Player } from '../../models/player';
 import { GameGateway } from './game.gateway';
 
 @WebSocketGateway({
-  path: '/tag',
+  path: '/mafia',
 })
 @Injectable()
-export class TagGateway implements OnGatewayInit {
+export class MafiaGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
-  readonly SEND_DELAY: number = 20;
-  canTagMap = new Map<string, boolean>(); // <lobby id>:<canTag>
 
+  private countingMap = new Map<string, number>(); // <lobby id>:<countdown val>
   private readonly TICK_RATE: number = 30;
 
   afterInit(server: any) {
@@ -26,7 +25,7 @@ export class TagGateway implements OnGatewayInit {
   }
 
   handleConnection(socket: Socket): void {
-    console.log(`Client ${socket.id} connected to the tag namespace`);
+    console.log(`Client ${socket.id} connected to the mafia namespace`);
   }
 
   @SubscribeMessage('joinGame')
@@ -38,11 +37,7 @@ export class TagGateway implements OnGatewayInit {
       GameGateway.lobbyPlayerMap.get(lobbyId);
 
     if (!playerMap) return;
-
     socket.join(lobbyId);
-    if (!this.canTagMap.has(lobbyId)) {
-      this.canTagMap.set(lobbyId, true);
-    }
 
     // Update socket mapping
     if (playerMap.has(oldSockId)) {
@@ -54,59 +49,28 @@ export class TagGateway implements OnGatewayInit {
 
     // Return lobby players to the socket
     this.server.to(lobbyId).emit('playerJoined', playerMap.get(socket.id));
-    console.log(`Player ${socket.id} joined tag game ${lobbyId}`);
+    console.log(`Player ${socket.id} joined mafia game ${lobbyId}`);
+
+    // If starting countdown has not begun, initialize it
+    if (!this.countingMap.has(lobbyId)) {
+      this.countingMap.set(lobbyId, 10);
+      this.beginCountdown(lobbyId);
+    }
   }
 
-  @SubscribeMessage('movePlayer')
-  handleMovePlayer(socket: Socket, data: string): void {
-    const lobbyId: string = data[0];
-    const x = Number(data[1]);
-    const y = Number(data[2]);
+  beginCountdown(lobbyId) {
+    // Countdown from specified value (and then return role assignment)
+    setInterval(() => {
+      const prevVal = this.countingMap.get(lobbyId);
 
-    const playerId: string = socket.id;
-
-    const playerMap: Map<string, Player> =
-      GameGateway.lobbyPlayerMap.get(lobbyId);
-
-    if (!playerMap) return;
-
-    // Update the player's position in the players map
-    let player: Player = playerMap.get(playerId);
-    if (player) {
-      player.x = x;
-      player.y = y;
-    } else {
-      player = new Player(socket.id, x, y);
-    }
-
-    playerMap.set(playerId, player);
-    GameGateway.setPlayerMap(lobbyId, playerMap);
-
-    // Broadcast the new state to all connected clients
-    this.server.to(lobbyId).emit('currentState', playerMap.get(playerId));
-  }
-
-  @SubscribeMessage('tagPlayer')
-  handleTagPlayer(socket: Socket, data: string): void {
-    const lobbyId: string = data[0];
-    const tagId: string = data[1];
-
-    // Lobby exists and player is in it? Emit tagged player ID
-    if (
-      GameGateway.lobbyPlayerMap.has(lobbyId) &&
-      GameGateway.lobbyPlayerMap.get(lobbyId).has(tagId) &&
-      this.canTagMap.get(lobbyId) == true
-    ) {
-      this.server.to(lobbyId).emit('playerTagged', tagId);
-      console.log(`Player ${tagId} in game ${lobbyId} was tagged!`);
-      this.canTagMap.set(lobbyId, false);
-      // Tag cooldown for 3 seconds
-      setTimeout(() => {
-        this.canTagMap.set(lobbyId, true);
-      }, 3000);
-    } else {
-      console.error(`Player ${tagId} in game ${lobbyId} not found`);
-    }
+      if (prevVal > 0) {
+        this.countingMap.set(lobbyId, prevVal - 1);
+        this.server.to(lobbyId).emit('countingDown', prevVal - 1);
+      } else {
+        this.assignRoles(lobbyId);
+        return;
+      }
+    }, 1000);
   }
 
   handleDisconnect(socket: Socket): void {
@@ -137,6 +101,40 @@ export class TagGateway implements OnGatewayInit {
     // End lobby session when all players disconnected
     if (playerMap.size == 0) {
       console.log(`Game session ${lobbyId} ended`);
+    }
+  }
+
+  assignRoles(lobbyId) {
+    const playerMap: Map<string, Player> =
+      GameGateway.lobbyPlayerMap.get(lobbyId);
+
+    const playerIds = Array.from(playerMap.keys());
+    const assignedMap = new Map<string, string>();
+
+    const uniqueRoles = ['Assassin', 'King', 'Herbalist', 'Jester'];
+
+    // Assign unique roles to random players
+    for (const role of uniqueRoles) {
+      // Select random player to be assassin
+      let randId;
+      do {
+        const randNdx = Math.floor(Math.random() * playerIds.length);
+        randId = playerIds.splice(randNdx, 1);
+      } while (assignedMap.has(randId) && playerIds.length > 0);
+
+      // Assign non-assigned random ID to role
+      console.log(`${randId} was assigned the role of ${role}`);
+      this.server.to(lobbyId).emit('assignRole', randId, role);
+    }
+
+    // Assign standard role to rest of players
+    for (const playerId in playerIds) {
+      console.log(
+        `Player ${playerId} (${
+          playerMap.get(playerId).name
+        }) was assigned the role of Noble`,
+      );
+      this.server.to(lobbyId).emit('assignRole', playerId, 'Noble');
     }
   }
 }

@@ -9,13 +9,15 @@
     import { LOBBY_PATH, PROD_SOCKET_URI } from "../config";
 
     const urlParams = window.location.pathname.substring(1);
-    const gameTitle = urlParams.substring(
+    const gameTitle = decodeURI(urlParams.substring(
         urlParams.indexOf("/") + 1,
         urlParams.lastIndexOf("/")
-    );
+    ));
     const lobbyId = urlParams.substring(urlParams.lastIndexOf("/") + 1);
 
     export let socket;
+
+    const gameUrl = (gameTitle == "The King's Feast") ? "mafia" : gameTitle.toLowerCase();
 
     onMount(() => {
         // Connect to the Socket.io endpoint on the backend
@@ -30,7 +32,7 @@
         });
 
         socket.on("gameStarted", () => {
-            navigate(`/game/tag/${lobbyId}?player=${socket.id}`);
+          navigate(`/game/${gameUrl}/${lobbyId}?player=${socket.id}`);
         });
     });
 
@@ -49,8 +51,8 @@
 
     function startGame() {
         // Emit a 'startGame' event to the server with the lobby ID
-        socket.emit("startGame", lobbyId, gameTitle);
-        navigate("/game/tag/" + lobbyId);
+        socket.emit("startGame", lobbyId, gameUrl);
+        navigate(`/game/${gameUrl}/${lobbyId}`);
     }
 
     function copyToClipboard() {

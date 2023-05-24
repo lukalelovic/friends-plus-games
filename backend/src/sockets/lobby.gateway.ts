@@ -52,25 +52,21 @@ export class LobbyGateway {
     const lobbyId: string = data[0];
     const gameName: string = data[1];
 
+    // Get the current lobby state
+    const lobbyList: Player[] = this.lobbyMap.get(lobbyId);
+
+    // Get all player id to object mapping
+    const playerMap = new Map<string, Player>();
+    lobbyList.forEach((player) => {
+      playerMap.set(player.id, player);
+    });
+
+    // Update tag map with players
+    GameGateway.setPlayerMap(lobbyId, playerMap);
+
     // Send current lobby to matching game name
-    if (gameName.toLowerCase() === 'tag') {
-      // Get the current lobby state
-      const lobbyList: Player[] = this.lobbyMap.get(lobbyId);
-
-      // Get all player id to object mapping
-      const playerMap = new Map<string, Player>();
-      lobbyList.forEach((player) => {
-        playerMap.set(player.id, player);
-      });
-
-      // Update tag map with players
-      GameGateway.setPlayerMap(lobbyId, playerMap);
-
-      this.server.to(lobbyId).emit('gameStarted');
-      console.log(`Starting ${gameName} game for lobby ${lobbyId}...`);
-    } else {
-      console.error('Invalid game name: ' + gameName);
-    }
+    this.server.to(lobbyId).emit('gameStarted');
+    console.log(`Starting ${gameName} game for lobby ${lobbyId}...`);
   }
 
   handleDisconnect(socket: Socket): void {
