@@ -25,7 +25,7 @@ export class Player {
    * Sets the player's name (for game lobbies)
    * @param {string} name - name to give the player
    */
-  setName(name: string) {
+  setName(name: string): void {
     this.name = name;
   }
 }

@@ -8,6 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { Player } from '../../models/player';
 import { GameGateway } from './game.gateway';
+import { Mafia } from 'src/models/mafia';
 
 @WebSocketGateway({
   path: '/mafia',
@@ -17,7 +18,7 @@ export class MafiaGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
-  private countingMap = new Map<string, number>(); // <lobby id>:<countdown val>
+  private gameMap = new Map<string, Mafia>(); // <lobby id>:<Mafia object>
   private readonly TICK_RATE: number = 30;
 
   afterInit(server: any) {
@@ -46,31 +47,33 @@ export class MafiaGateway implements OnGatewayInit {
       playerMap.delete(oldSockId);
       playerMap.get(socket.id).id = socket.id;
     }
+    GameGateway.setPlayerMap(lobbyId, playerMap);
 
     // Return lobby players to the socket
     this.server.to(lobbyId).emit('playerJoined', playerMap.get(socket.id));
     console.log(`Player ${socket.id} joined mafia game ${lobbyId}`);
 
     // If starting countdown has not begun, initialize it
-    if (!this.countingMap.has(lobbyId)) {
-      this.countingMap.set(lobbyId, 10);
-      this.beginCountdown(lobbyId);
+    if (!this.gameMap.has(lobbyId)) {
+      this.gameMap.set(lobbyId, new Mafia(lobbyId));
+      this.gameMap.get(lobbyId).beginCountdown(this.server);
     }
   }
 
-  beginCountdown(lobbyId) {
-    // Countdown from specified value (and then return role assignment)
-    setInterval(() => {
-      const prevVal = this.countingMap.get(lobbyId);
+  @SubscribeMessage('assignRoles')
+  handleAssignRoles(socket: Socket, lobbyId: string): void {
+    // Get player id list in current game
+    const playerMap: Map<string, Player> =
+      GameGateway.lobbyPlayerMap.get(lobbyId);
+    const playerIds = Array.from(playerMap.keys());
 
-      if (prevVal > 0) {
-        this.countingMap.set(lobbyId, prevVal - 1);
-        this.server.to(lobbyId).emit('countingDown', prevVal - 1);
-      } else {
-        this.assignRoles(lobbyId);
-        return;
-      }
-    }, 1000);
+    // Method already executed/executing?
+    if (this.gameMap.get(lobbyId).rolesAssigned()) {
+      return;
+    }
+
+    // Else assign player roles
+    this.gameMap.get(lobbyId).assignRoles(this.server, playerIds);
   }
 
   handleDisconnect(socket: Socket): void {
@@ -101,40 +104,6 @@ export class MafiaGateway implements OnGatewayInit {
     // End lobby session when all players disconnected
     if (playerMap.size == 0) {
       console.log(`Game session ${lobbyId} ended`);
-    }
-  }
-
-  assignRoles(lobbyId) {
-    const playerMap: Map<string, Player> =
-      GameGateway.lobbyPlayerMap.get(lobbyId);
-
-    const playerIds = Array.from(playerMap.keys());
-    const assignedMap = new Map<string, string>();
-
-    const uniqueRoles = ['Assassin', 'King', 'Herbalist', 'Jester'];
-
-    // Assign unique roles to random players
-    for (const role of uniqueRoles) {
-      // Select random player to be assassin
-      let randId;
-      do {
-        const randNdx = Math.floor(Math.random() * playerIds.length);
-        randId = playerIds.splice(randNdx, 1);
-      } while (assignedMap.has(randId) && playerIds.length > 0);
-
-      // Assign non-assigned random ID to role
-      console.log(`${randId} was assigned the role of ${role}`);
-      this.server.to(lobbyId).emit('assignRole', randId, role);
-    }
-
-    // Assign standard role to rest of players
-    for (const playerId in playerIds) {
-      console.log(
-        `Player ${playerId} (${
-          playerMap.get(playerId).name
-        }) was assigned the role of Noble`,
-      );
-      this.server.to(lobbyId).emit('assignRole', playerId, 'Noble');
     }
   }
 }

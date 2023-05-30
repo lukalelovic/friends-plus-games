@@ -18,6 +18,14 @@
 
   let players = {};
 
+  const roleColor = {
+    'Assassin': '#B799FF',
+    'Noble': '#B70404',
+    'King': '#E8AA42',
+    'Herbalist': '#1B9C85',
+    'Jester': '#FF55BB'
+  }
+
   onMount(() => {
     socket = io(PROD_SOCKET_URI, {
       path: MAFIA_PATH,
@@ -65,14 +73,47 @@
       }
     });
 
-    socket.on('countingDown', (val) => {
+    socket.on('beginCount', (val) => {
       countDownText.text('Starting in \n' + val);
     });
 
-    socket.on('assignRole', (playerId, role) => {
+    socket.on('endBegin', () => {
+      socket.emit('assignRoles', lobbyId);
+    })
+
+    socket.on('roleAssigned', (playerId, role) => {
+      countDownText.destroy();
+
       console.log(players[playerId].name + ' was assigned to ' + role);
       players[playerId].role = role;
+
+      if (playerId == socket.id) {
+        const rolePrompt = new Konva.Text({
+          x: WIDTH / 4,
+          y: HEIGHT - 200,
+          fontFamily: 'Algerian',
+          fontSize: 24,
+          text: 'Your Role is',
+          fill: BG_COLOR,
+          align: 'center'
+        });
+        layer.add(rolePrompt);
+
+        layer.add(new Konva.Text({
+          x: rolePrompt.x(),
+          y: rolePrompt.y() + 36,
+          fontFamily: 'Algerian',
+          fontSize: 36,
+          text: role,
+          fill: roleColor[role],
+          align: 'center'
+        }));
+      }
     });
+
+    socket.on('beginGame', () => {
+      console.log('Game is ready...');
+    })
   }
 </script>
 
