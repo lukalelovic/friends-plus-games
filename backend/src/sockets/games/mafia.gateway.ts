@@ -76,6 +76,23 @@ export class MafiaGateway implements OnGatewayInit {
     this.gameMap.get(lobbyId).assignRoles(this.server, playerIds);
   }
 
+  @SubscribeMessage('castVote')
+  handleCastVote(socket: Socket, data: string) {
+    const lobbyId = data[0];
+    const votedId = data[1];
+
+    if (!this.gameMap.get(lobbyId).getIsDay()) {
+      return;
+    }
+
+    this.gameMap.get(lobbyId).castVote(socket.id, votedId);
+  }
+
+  @SubscribeMessage('nightAction')
+  handleNightAction(socket: Socket, data: string) {
+    // TODO
+  }
+
   handleDisconnect(socket: Socket): void {
     // Get the lobby ID of the current socket
     let lobbyId: string;
@@ -98,12 +115,16 @@ export class MafiaGateway implements OnGatewayInit {
     }
 
     GameGateway.setPlayerMap(lobbyId, playerMap);
+
+    this.gameMap.get(lobbyId).removePlayer(socket.id);
     this.server.to(lobbyId).emit('playerLeft', socket.id);
-    console.log(`Socket ${socket.id} disconnected from game namespace`);
 
     // End lobby session when all players disconnected
     if (playerMap.size == 0) {
       console.log(`Game session ${lobbyId} ended`);
+      this.gameMap.delete(lobbyId);
     }
+
+    console.log(`Socket ${socket.id} disconnected from game namespace`);
   }
 }

@@ -3,10 +3,10 @@
   import { onDestroy, onMount } from "svelte";
   import { io } from "socket.io-client";
   import Game from "../pages/Game.svelte";
-  import { detectCollisions } from "./detectCollisions";
+  import { detectCollisions } from "./generic/detectCollisions";
   import { PROD_SOCKET_URI, TAG_PATH } from "../config";
-  import { Keyboard } from "./Keyboard";
-  import { joinGame } from "./joinGame";
+  import { Keyboard } from "./generic/Keyboard";
+  import { joinGame } from "./generic/joinGame";
 
   let lobbyId;
 

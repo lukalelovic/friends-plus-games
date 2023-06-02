@@ -3,13 +3,9 @@
   // import { validateToken } from "../auth";
 
   export let card;
+  let showModal = false;
 
-  // TODO: implement login/continue as guest modal
   function handleClick() {
-    // if (!loggedIn) {
-    //   showModal = true;
-    // }
-
     window.location.href = `lobby/${card.title}/`+generateLobbyID();
   }
 
@@ -24,6 +20,12 @@
   on:click={handleClick}
   class="max-w-sm rounded overflow-hidden shadow-lg bg-secondary hover:shadow-2xl">
   <img src={card.gameImage} alt="Game Image" class="w-full">
+
+  <!-- {#if showModal}
+    <dialog id="guest-modal">
+      <button on:click={() => showModal = false}>x</button>
+    </dialog>
+  {/if} -->
   
   <div class="px-6 py-4 text-white">
     <div class="font-bold text-xl mb-2">{card.title}</div>

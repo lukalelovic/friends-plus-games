@@ -22,7 +22,7 @@
 <nav class="bg-transparent border-b-2 border-secondary">
   <div class="container mx-auto px-4 py-2 flex justify-between items-center">
     <a href="/" class="text-white text-lg font-bold">
-      <img class="w-64 m-0 p-1" src="/logo.svg" alt="Games with Friends" />
+      <img class="w-72 m-0 p-1" src="/logo.svg" alt="Games with Friends" />
     </a>
     <div class="flex items-center">
       <div class="relative">

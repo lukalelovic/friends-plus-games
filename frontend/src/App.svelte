@@ -5,7 +5,7 @@
     import Login from "./pages/Login.svelte";
     import Signup from "./pages/Signup.svelte";
     import Tag from "./games/Tag.svelte";
-    import Mafia from "./games/Mafia.svelte";
+    import Mafia from "./games/mafia/Mafia.svelte";
 </script>
 
 <Router>
