@@ -206,18 +206,28 @@ export class Mafia {
   public getWinner(): string | null {
     let winner: string | null = null;
     let maxVotes = 0;
+    let noWinner = false;
 
     for (const playerId in this.players) {
       const player = this.players[playerId];
 
       // Get palyer with max votes
       if (player.votes > maxVotes) {
+        noWinner = false;
+
         maxVotes = player.votes;
         winner = playerId;
+      } else if (player.votes == maxVotes) {
+        noWinner = true;
       }
 
       // Reset casted vote
       this.players[playerId].voteCasted = false;
+    }
+
+    // In the event of a tie
+    if (noWinner) {
+      return undefined;
     }
 
     return winner;
@@ -238,7 +248,23 @@ export class Mafia {
 
       // Vote result
       if (this.dayNum > 1) {
-        server.to(this.lobbyId).emit('voteResult', this.getWinner());
+        const winnerId = this.getWinner();
+        server.to(this.lobbyId).emit('voteResult', winnerId);
+
+        if (winnerId) {
+          if (this.players[winnerId].role == 'Assassin') {
+            this.goodWon = true;
+            break;
+          } else if (this.players[winnerId].role == 'Jester') {
+            server.to(this.lobbyId).emit('jesterWin', winnerId);
+            return;
+          } else if (Object.keys(this.players).length == 3) {
+            this.evilWon = true;
+            break;
+          }
+        }
+
+        this.removePlayer(winnerId);
 
         await new Promise((resolve) =>
           setTimeout(resolve, this.SEC_INTERVAL * 5),
@@ -264,10 +290,14 @@ export class Mafia {
         }
       }
 
-      // TODO: calculate good win, evil win, draw
+      if (Object.keys(this.players).length <= 2) {
+        this.evilWon = true;
+      }
 
       this.dayNum++;
     }
+
+    // TODO: jester wins
 
     if (this.dayNum >= 15) {
       server.to(this.lobbyId).emit('drawWin');
@@ -290,7 +320,7 @@ export class Mafia {
    */
   private dayLoop(server: Server): Promise<number> {
     return new Promise((resolve) => {
-      let dayCountdown = this.dayNum == 1 ? 10 : 30; // No discussion/voting on day 1
+      let dayCountdown = this.dayNum == 1 ? 10 : 60; // No discussion/voting on day 1
       this.isDay = true;
 
       const dayCount = setInterval(() => {
