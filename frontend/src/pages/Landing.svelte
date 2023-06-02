@@ -20,7 +20,7 @@
 <div class="min-h-screen flex flex-col">
   <Navbar />
   <div class="flex flex-col items-center">
-    <div class="min-w-full flex flex-wrap mt-4 justify-center space-x-4">
+    <div class="flex flex-wrap justify-center p-3 space-y-2 sm:space-y-0 sm:space-x-2">
       {#each cards as card}
         <GameCard {card} />
       {/each}

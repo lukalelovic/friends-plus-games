@@ -67,12 +67,12 @@
             <JoinForm title={gameTitle} handleSubmit={joinLobby} />
         {:else}
             <div class="flex flex-col justify-center items-center my-3 space-x-2">
-                <h1 class="text-3xl font-bold mb-4 text-white">
+                <h1 class="text-3xl font-bold mb-4 text-white text-center">
                     Share the invite link with friends:
                 </h1>
 
-                <div class="bg-black text-white p-4 space-x-6 flex items-center justify-between">
-                    <p class="font-mono text-lg">{window.location.href}</p>
+                <div class="bg-black text-white space-x-6 flex items-center p-4">
+                    <p class="font-mono break-all text-lg">{window.location.href}</p>
 
                     <button
                         class="bg-white text-black p-2 rounded hover:bg-gray-200 focus:bg-gray-200"

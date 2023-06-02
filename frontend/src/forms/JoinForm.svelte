@@ -3,7 +3,7 @@
     export let title;
 </script>
 
-<div class="sm:mx-auto sm:w-full sm:max-w-md">
+<div class="sm:mx-auto sm:w-full sm:max-w-md p-3">
     <div class="text-center">
         <h2 class="text-4xl font-extrabold text-white">Join {title} Lobby</h2>
     </div>

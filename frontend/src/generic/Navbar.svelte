@@ -3,11 +3,16 @@
   import { validateToken } from "../auth";
 
   let loggedIn = false;
+  let isMenuOpen = false;
 
   onMount(async () => {
     validateToken()
     .then((res) => loggedIn = res);
   });
+
+  function toggleMenu() {
+    isMenuOpen = !isMenuOpen;
+  }
 
   function search() {
     // TODO: Handle search functionality
@@ -19,12 +24,13 @@
   }
 </script>
 
-<nav class="bg-transparent border-b-2 border-secondary">
+<nav class="bg-transparent shadow-lg">
   <div class="container mx-auto px-4 py-2 flex justify-between items-center">
     <a href="/" class="text-white text-lg font-bold">
       <img class="w-72 m-0 p-1" src="/logo.svg" alt="Games with Friends" />
     </a>
-    <div class="flex items-center">
+
+    <div class="hidden lg:flex items-center">
       <div class="relative">
         <input
           type="text"
@@ -33,7 +39,6 @@
           on:input={search}
         />
         <div class="absolute right-0 top-0 mt-3 mr-4 text-gray-600">
-          <!-- Search Icon -->
           <svg
             class="h-4 w-4"
             fill="none"
@@ -70,5 +75,18 @@
         <button on:click={logOut} class="border-2 border-white p-2 rounded-lg ml-4 text-white hover:border-gray-200 hover:text-gray-200">Logout</button>
       {/if}
     </div>
+
+    <button class="lg:hidden text-white focus:outline-none" on:click={toggleMenu}>
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
   </div>
+
+  {#if isMenuOpen}
+    <div class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2">
+      <a href="/login" class="block py-2 px-4 bg-white text-tertiary rounded-sm font-bold">Login</a>
+      <a href="/signup" class="block py-2 px-4 bg-quaternary text-white rounded-sm font-bold">Sign Up</a>
+    </div>
+    {/if}
 </nav>

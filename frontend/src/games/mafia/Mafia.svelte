@@ -18,6 +18,8 @@
   let countDownValue = 10;
   let isDay = false;
 
+  let currBg;
+
   let dayBg;
   let nightBg;
 
@@ -47,31 +49,29 @@
   });
 
   function start(stage, layer) {
+    // Add countdown text
+    let startingStr = "Starting in \n" + countDownValue.toString();
+    
+    topText = new Konva.Text({
+      x: WIDTH / 6,
+      y: 100,
+      fontFamily: "Algerian",
+      fontSize: 36,
+      text: startingStr,
+      fill: 'white',
+      align: "center",
+    });
+
+    topText.moveToTop();
+    layer.add(topText);
+
     Konva.Image.fromURL("/games/mafia-bg-day.png", (img) => {
       dayBg = img;
 
       dayBg.width(WIDTH);
       dayBg.height(HEIGHT);
 
-      dayBg.moveToBottom();
-
-      layer.add(dayBg);
-
-      // Add countdown text
-      let startingStr = "Starting in \n" + countDownValue.toString();
-      topText = new Konva.Text({
-        x: WIDTH / 6,
-        y: 100,
-        fontFamily: "Algerian",
-        fontSize: 36,
-        text: startingStr,
-        fill: 'white',
-        align: "center",
-      });
-
-      topText.moveToTop();
-
-      layer.add(topText);
+      switchBg(layer, true);
     });
 
     Konva.Image.fromURL("/games/mafia-bg-night.png", (img) => {
@@ -79,8 +79,6 @@
 
       nightBg.width(WIDTH);
       nightBg.height(HEIGHT);
-
-      nightBg.moveToBottom();
     });
   }
 
@@ -117,9 +115,9 @@
       isDay = true;
       topText.x(WIDTH / 3);
 
-      // layer.remove(nightBg);
-      // layer.add(dayBg);
-      // layer.draw();
+      // if (currBg == nightBg) {
+      //   switchBg(layer, true);
+      // }
 
       let prevY = topText.y() + 50;
 
@@ -153,9 +151,9 @@
       topText.text("Night " + nightNum + "\n" + nightCount);
       isDay = false;
 
-      // layer.remove(dayBg);
-      // layer.add(nightBg);
-      // layer.draw();
+      // if (currBg == dayBg) {
+      //   switchBg(layer, false);
+      // }
 
       topText.x(WIDTH / 4);
     });
@@ -172,6 +170,19 @@
     });
 
     // TODO: check disconnect of players
+  }
+
+  function switchBg(layer, isDay) {
+    if (currBg) {
+      layer.remove(currBg);
+      currBg = null;
+    }
+
+    currBg = (isDay) ? dayBg : nightBg;
+    layer.add(currBg);
+
+    currBg.moveToBottom();
+    currBg.moveUp();
   }
 </script>
 

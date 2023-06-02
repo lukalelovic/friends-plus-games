@@ -18,8 +18,8 @@
 
 <button
   on:click={handleClick}
-  class="max-w-sm rounded overflow-hidden shadow-lg bg-secondary hover:shadow-2xl">
-  <img src={card.gameImage} alt="Game Image" class="w-full">
+  class="w-full max-w-sm rounded overflow-hidden shadow-lg bg-tertiary hover:shadow-2xl">
+  <img src={card.gameImage} alt="Game Image" class="w-full h-auto">
 
   <!-- {#if showModal}
     <dialog id="guest-modal">
@@ -27,7 +27,7 @@
     </dialog>
   {/if} -->
   
-  <div class="px-6 py-4 text-white">
+  <div class="px-4 py-3 text-white">
     <div class="font-bold text-xl mb-2">{card.title}</div>
     <p class="text-base">
       {card.description}
