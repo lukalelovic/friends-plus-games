@@ -6,6 +6,10 @@ interface MafiaPlayer {
   votes: number;
   role: string;
   voteCasted: boolean;
+  nextToKill: boolean;
+  isHealed: boolean;
+  numVisits: number;
+  prevActionId: string | null;
 }
 
 /**
@@ -94,6 +98,10 @@ export class Mafia {
         votes: 0,
         role: role,
         voteCasted: false,
+        nextToKill: false,
+        isHealed: false,
+        numVisits: 0,
+        prevActionId: null,
       };
 
       // Assign random ID to unique role
@@ -110,6 +118,10 @@ export class Mafia {
         votes: 0,
         role: 'Noble',
         voteCasted: false,
+        nextToKill: false,
+        isHealed: false,
+        numVisits: 0,
+        prevActionId: null,
       };
     }
 
@@ -224,7 +236,7 @@ export class Mafia {
 
       await this.dayLoop(server);
 
-      // Send daily voting outcome
+      // Vote result
       if (this.dayNum > 1) {
         server.to(this.lobbyId).emit('voteResult', this.getWinner());
 
@@ -235,6 +247,24 @@ export class Mafia {
 
       this.nightNum++;
       await this.nightLoop(server);
+
+      // Night result
+      for (const playerId in this.players) {
+        const player = this.players[playerId];
+
+        if (player.nextToKill) {
+          if (!player.isHealed) {
+            server.to(this.lobbyId).emit('playerKilled', playerId);
+          }
+
+          this.removePlayer(playerId);
+        } else {
+          server.to(this.lobbyId).emit('numVisits', playerId, player.numVisits);
+          this.resetNightStats(playerId);
+        }
+      }
+
+      // TODO: calculate good win, evil win, draw
 
       this.dayNum++;
     }
@@ -258,7 +288,7 @@ export class Mafia {
    *                            The resolved value is currently set to 0 in the implementation.
    * @private
    */
-  private dayLoop(server): Promise<number> {
+  private dayLoop(server: Server): Promise<number> {
     return new Promise((resolve) => {
       let dayCountdown = this.dayNum == 1 ? 10 : 30; // No discussion/voting on day 1
       this.isDay = true;
@@ -284,7 +314,7 @@ export class Mafia {
    *                            The resolved value is currently set to 0 in the implementation.
    * @private
    */
-  private nightLoop(server): Promise<number> {
+  private nightLoop(server: Server): Promise<number> {
     return new Promise((resolve) => {
       let nightCountdown = 20;
       this.isDay = false;
@@ -302,5 +332,65 @@ export class Mafia {
         nightCountdown--;
       }, this.SEC_INTERVAL);
     });
+  }
+
+  public performNightAction(currPlayerId: string, otherPlayerId: string): void {
+    if (this.getIsDay()) {
+      return;
+    }
+
+    const currPlayer = this.players[currPlayerId];
+    const otherPlayer = this.players[otherPlayerId];
+
+    if (!currPlayer || !otherPlayer) {
+      console.error(
+        currPlayerId +
+          ' could not perform action against other player ' +
+          otherPlayerId,
+      );
+      return;
+    }
+
+    // Player already clicked on someone?
+    if (currPlayer.prevActionId) {
+      if (currPlayer.role == 'Assassin') {
+        this.players[currPlayer.prevActionId].numVisits--;
+        this.players[currPlayer.prevActionId].nextToKill = false;
+      } else if (currPlayer.role == 'Herbalist') {
+        this.players[currPlayer.prevActionId].numVisits--;
+        this.players[currPlayer.prevActionId].isHealed = false;
+      } else if (currPlayer.role == 'Noble') {
+        this.players[currPlayer.prevActionId].numVisits--;
+      }
+    }
+
+    // Perform role night action (if player has one)
+    switch (currPlayer.role) {
+      case 'Assassin':
+        this.players[otherPlayerId].nextToKill = true;
+        this.players[otherPlayerId].numVisits++;
+        break;
+      case 'Herbalist':
+        this.players[otherPlayerId].isHealed = true;
+        this.players[otherPlayerId].numVisits++;
+      case 'Noble':
+        this.players[otherPlayerId].numVisits++;
+      case 'King':
+      case 'Jester':
+      default:
+        break;
+    }
+  }
+
+  private resetNightStats(playerId: string): void {
+    const player = this.players[playerId];
+    if (!player) return;
+
+    player.nextToKill = false;
+    player.isHealed = false;
+    player.numVisits = 0;
+    player.prevActionId = null;
+
+    this.players[playerId] = player;
   }
 }

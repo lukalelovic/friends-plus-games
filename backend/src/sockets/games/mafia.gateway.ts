@@ -81,6 +81,10 @@ export class MafiaGateway implements OnGatewayInit {
     const lobbyId = data[0];
     const votedId = data[1];
 
+    if (socket.id == votedId) {
+      return;
+    }
+
     if (!this.gameMap.get(lobbyId).getIsDay()) {
       return;
     }
@@ -90,7 +94,14 @@ export class MafiaGateway implements OnGatewayInit {
 
   @SubscribeMessage('nightAction')
   handleNightAction(socket: Socket, data: string) {
-    // TODO
+    const lobbyId = data[0];
+    const playerId = data[1];
+
+    if (socket.id == playerId) {
+      return;
+    }
+
+    this.gameMap.get(lobbyId).performNightAction(socket.id, playerId);
   }
 
   handleDisconnect(socket: Socket): void {
