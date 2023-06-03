@@ -79,10 +79,6 @@
       dayNum = dn;
       countDownValue = dayCount;
 
-      if (players[socket.id].role != 'Noble') {
-        currTarget = null;
-      }
-
       isDay = true;
     });
 
@@ -117,8 +113,8 @@
         currTarget == playerId
       ) {
         topText = players[playerId] + " was visited " + numVisits + " times.";
-        currTarget = null;
       }
+      currTarget = null;
     });
 
     socket.on("playerLeft", (playerId) => {
@@ -128,6 +124,7 @@
     socket.on("drawWin", () => {
       topText = "Game Draw";
       countDownValue = null;
+      currTarget = null;
     });
 
     socket.on("evilWin", () => {
@@ -142,16 +139,19 @@
 
       topText = "Assassin ("+assassin+") Wins";
       countDownValue = null;
+      currTarget = null;
     });
 
     socket.on("goodWin", () => {
       topText = "King Wins!";
       countDownValue = null;
+      currTarget = null;
     });
 
     socket.on("jesterWin", (jesterId) => {
       topText = "Jester "+players[jesterId].name+" Wins!";
       countDownValue = null;
+      currTarget = null;
     });
   }
 

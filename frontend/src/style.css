@@ -1,7 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@500&family=Open+Sans&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
   background: linear-gradient(45deg, #f3ec78, #af4261);
+  font-family: 'Open Sans', sans-serif;
+  letter-spacing: 1px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Geologica', sans-serif;
 }

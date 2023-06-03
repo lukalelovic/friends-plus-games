@@ -6,8 +6,7 @@
   let isMenuOpen = false;
 
   onMount(async () => {
-    validateToken()
-    .then((res) => loggedIn = res);
+    loggedIn = await validateToken();
   });
 
   function toggleMenu() {
@@ -31,7 +30,7 @@
     </a>
 
     <div class="hidden lg:flex items-center">
-      <div class="relative">
+      <!-- <div class="relative">
         <input
           type="text"
           class="bg-gray-200 w-0 sm:w-fit rounded-lg px-4 py-2 focus:outline-none focus:shadow-outline"
@@ -52,8 +51,10 @@
             <path d="M10 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0 0v4" />
           </svg>
         </div>
-      </div>
+      </div> -->
 
+      <a href="/about" class="text-white hover:text-gray-200 p-2">About</a>
+      
       {#if !loggedIn}
         <div class="ml-4">
           <a
@@ -84,9 +85,15 @@
   </div>
 
   {#if isMenuOpen}
-    <div class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2">
-      <a href="/login" class="block py-2 px-4 bg-white text-tertiary rounded-sm font-bold">Login</a>
-      <a href="/signup" class="block py-2 px-4 bg-quaternary text-white rounded-sm font-bold">Sign Up</a>
-    </div>
+    {#if !loggedIn}
+      <div class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2">
+        <a href="/login" class="block py-2 px-4 bg-white text-tertiary rounded-sm font-bold">Login</a>
+        <a href="/signup" class="block py-2 px-4 bg-quaternary text-white rounded-sm font-bold">Sign Up</a>
+      </div>
+    {:else}
+      <div class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2">
+        <button on:click={logOut} class="block py-2 px-4 bg-white min-w-full text-tertiary rounded-sm font-bold">Logout</button>
+      </div>
+    {/if}
     {/if}
 </nav>
