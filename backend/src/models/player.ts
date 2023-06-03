@@ -2,7 +2,7 @@
  * Represents a in-game player object
  */
 export class Player {
-  id: string;
+  public id: string;
   x: number;
   y: number;
   name: string;

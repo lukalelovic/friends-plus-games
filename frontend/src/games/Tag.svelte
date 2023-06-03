@@ -52,23 +52,31 @@
     if (!socket) return;
 
     // Create new player shape
-    socket.on("playerJoined", (player) => {
-      if (player.id in playerCircles) return;
+    socket.on("playerJoined", (players, oldSockId) => {
+      if (oldSockId in playerCircles) {
+        playerCircles[oldSockId].destroy();
+        delete playerCircles[oldSockId];
+      }
 
-      const fill = player.id == socket.id ? "green" : "blue";
+      players.forEach(player => {
+        console.log(player);
+        if (player.id in playerCircles) return;
 
-      const circ = new Konva.Circle({
-        x: getRandomPos(PLAYER_SIZE, WIDTH - PLAYER_SIZE), // random x
-        y: getRandomPos(PLAYER_SIZE, HEIGHT - PLAYER_SIZE), // random y
-        radius: PLAYER_SIZE,
-        fill: fill,
+        const fill = player.id == socket.id ? "green" : "blue";
+
+        const circ = new Konva.Circle({
+          x: getRandomPos(PLAYER_SIZE, WIDTH - PLAYER_SIZE), // random x
+          y: getRandomPos(PLAYER_SIZE, HEIGHT - PLAYER_SIZE), // random y
+          radius: PLAYER_SIZE,
+          fill: fill,
+        });
+
+        layer.add(circ);
+        playerCircles[player.id] = circ;
+
+        // Initialize random x,y pos
+        socket.emit("movePlayer", lobbyId, circ.x(), circ.y());
       });
-
-      layer.add(circ);
-      playerCircles[player.id] = circ;
-
-      // Initialize random x,y pos
-      socket.emit("movePlayer", lobbyId, circ.x(), circ.y());
     });
 
     socket.on("currentState", (player) => {

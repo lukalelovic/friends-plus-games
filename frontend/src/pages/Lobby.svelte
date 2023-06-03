@@ -52,7 +52,7 @@
     function startGame() {
         // Emit a 'startGame' event to the server with the lobby ID
         socket.emit("startGame", lobbyId, gameUrl);
-        navigate(`/game/${gameUrl}/${lobbyId}`);
+        navigate(`/game/${gameUrl}/${lobbyId}?player=${socket.id}`);
     }
 
     function copyToClipboard() {

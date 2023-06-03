@@ -42,15 +42,20 @@ export class MafiaGateway implements OnGatewayInit {
 
     // Update socket mapping
     if (playerMap.has(oldSockId)) {
-      playerMap.set(socket.id, playerMap.get(oldSockId));
+      const player = playerMap.get(oldSockId);
+      player.id = socket.id;
 
       playerMap.delete(oldSockId);
-      playerMap.get(socket.id).id = socket.id;
+      playerMap.set(socket.id, player);
     }
+
     GameGateway.setPlayerMap(lobbyId, playerMap);
 
     // Return lobby players to the socket
-    this.server.to(lobbyId).emit('playerJoined', playerMap.get(socket.id));
+    console.log([...playerMap.values()]);
+    this.server
+      .to(lobbyId)
+      .emit('playerJoined', [...playerMap.values()], oldSockId);
     console.log(`Player ${socket.id} joined mafia game ${lobbyId}`);
 
     // If starting countdown has not begun, initialize it

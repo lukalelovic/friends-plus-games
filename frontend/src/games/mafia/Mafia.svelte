@@ -11,8 +11,9 @@
   let topText = "Starting in...";
   let countDownValue = 10;
   let isDay = false;
+  let dayNum = 1;
 
-  let visitTarget = null;
+  let currTarget = null;
 
   let players = {};
 
@@ -45,12 +46,19 @@
   });
 
   function gameLoop() {
-    socket.on("playerJoined", (player) => {
-      players[player.id] = {
-        name: player.name,
-        isAlive: true,
-        roll: null,
-      };
+    socket.on("playerJoined", (currPlayers, oldSockId) => {
+      if (oldSockId in players) {
+        delete players[oldSockId];
+      }
+
+      currPlayers.forEach(player => {
+        console.log(player);
+        players[player.id] = {
+          name: player.name,
+          isAlive: true,
+          roll: null,
+        };
+      });
     });
 
     socket.on("beginCount", (val) => {
@@ -66,9 +74,14 @@
       players[playerId].role = role;
     });
 
-    socket.on("dayCount", (dayNum, dayCount) => {
-      topText = "Day " + dayNum;
+    socket.on("dayCount", (dn, dayCount) => {
+      topText = "Day " + dn;
+      dayNum = dn;
       countDownValue = dayCount;
+
+      if (players[socket.id].role != 'Noble') {
+        currTarget = null;
+      }
 
       isDay = true;
     });
@@ -100,10 +113,11 @@
     socket.on("numVisits", (playerId, numVisits) => {
       if (
         players[socket.id].role == "Noble" &&
-        visitTarget &&
-        visitTarget == playerId
+        currTarget &&
+        currTarget == playerId
       ) {
         topText = players[playerId] + " was visited " + numVisits + " times.";
+        currTarget = null;
       }
     });
 
@@ -142,16 +156,22 @@
   }
 
   function handleAction(playerId) {
-    if (isDay) {
+    const currPlayer = players[socket.id]
+
+    if (socket.id == playerId) {
+      return;
+    }
+
+    if (isDay && dayNum > 1) {
       socket.emit("castVote", lobbyId, playerId);
       console.log("Vote has been cast against " + players[playerId].name);
-    } else {
+
+      currTarget = playerId;
+    } else if (currPlayer.role != 'King') {
       socket.emit("nightAction", lobbyId, playerId);
       console.log("Action will be performed against " + players[playerId].name);
-
-      if (players[socket.id].role == "Noble") {
-        visitTarget = playerId;
-      }
+      
+      currTarget = playerId;
     }
   }
 
@@ -211,6 +231,13 @@
         {#if (countDownValue)}
           <h2>{countDownValue} seconds</h2>
         {/if}
+        {#if currTarget}
+          {#if !isDay}
+            <h3>You will visit {players[currTarget].name} tonight.</h3>
+          {:else}
+            <h3>You are voting for {players[currTarget].name}.</h3>
+          {/if}
+        {/if}
       </div>
 
       <div class="mb-4">
@@ -219,7 +246,7 @@
             class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2 mb-2"
             on:click={() => handleAction(playerId)}
           >
-            {player.name}
+            {player.name} {#if playerId == socket.id}(You){/if}
           </button>
         {/each}
       </div>

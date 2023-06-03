@@ -46,14 +46,19 @@ export class TagGateway implements OnGatewayInit {
 
     // Update socket mapping
     if (playerMap.has(oldSockId)) {
-      playerMap.set(socket.id, playerMap.get(oldSockId));
+      const player = playerMap.get(oldSockId);
+      player.id = socket.id;
 
       playerMap.delete(oldSockId);
-      playerMap.get(socket.id).id = socket.id;
+      playerMap.set(socket.id, player);
     }
 
+    GameGateway.setPlayerMap(lobbyId, playerMap);
+
     // Return lobby players to the socket
-    this.server.to(lobbyId).emit('playerJoined', playerMap.get(socket.id));
+    this.server
+      .to(lobbyId)
+      .emit('playerJoined', [...playerMap.values()], oldSockId);
     console.log(`Player ${socket.id} joined tag game ${lobbyId}`);
   }
 
@@ -91,21 +96,28 @@ export class TagGateway implements OnGatewayInit {
     const lobbyId: string = data[0];
     const tagId: string = data[1];
 
+    if (lobbyId == null || tagId == null) {
+      return;
+    }
+
     // Lobby exists and player is in it? Emit tagged player ID
-    if (
-      GameGateway.lobbyPlayerMap.has(lobbyId) &&
-      GameGateway.lobbyPlayerMap.get(lobbyId).has(tagId) &&
-      this.canTagMap.get(lobbyId) == true
-    ) {
-      this.server.to(lobbyId).emit('playerTagged', tagId);
-      console.log(`Player ${tagId} in game ${lobbyId} was tagged!`);
-      this.canTagMap.set(lobbyId, false);
-      // Tag cooldown for 3 seconds
-      setTimeout(() => {
-        this.canTagMap.set(lobbyId, true);
-      }, 3000);
-    } else {
-      console.error(`Player ${tagId} in game ${lobbyId} not found`);
+    if (GameGateway.lobbyPlayerMap.has(lobbyId)) {
+      if (
+        GameGateway.lobbyPlayerMap.get(lobbyId).has(tagId) &&
+        this.canTagMap.get(lobbyId) == true
+      ) {
+        this.server.to(lobbyId).emit('playerTagged', tagId);
+        console.log(`Player ${tagId} in game ${lobbyId} was tagged!`);
+        this.canTagMap.set(lobbyId, false);
+
+        // Tag cooldown for 3 seconds
+        setTimeout(() => {
+          this.canTagMap.set(lobbyId, true);
+        }, 3000);
+      } else if (!GameGateway.lobbyPlayerMap.get(lobbyId).has(tagId)) {
+        console.error(`Player ${tagId} in game ${lobbyId} not found`);
+        this.server.to(lobbyId).emit('playerLeft', tagId);
+      }
     }
   }
 
