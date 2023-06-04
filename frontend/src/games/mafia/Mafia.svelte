@@ -14,6 +14,7 @@
   let dayNum = 1;
 
   let currTarget = null;
+  let numVisits = null;
 
   let players = {};
 
@@ -52,7 +53,6 @@
       }
 
       currPlayers.forEach(player => {
-        console.log(player);
         players[player.id] = {
           name: player.name,
           isAlive: true,
@@ -70,7 +70,6 @@
     });
 
     socket.on("roleAssigned", (playerId, role) => {
-      console.log(players[playerId].name + " was assigned to " + role);
       players[playerId].role = role;
     });
 
@@ -91,6 +90,8 @@
 
     socket.on("voteResult", (winnerId) => {
       topText = "Vote Result: ";
+      numVisits = null;
+      currTarget = null;
 
       if (!winnerId || !players[winnerId]) {
         topText += "Draw";
@@ -106,15 +107,15 @@
       players[playerId].name += " (KILLED)";
     });
 
-    socket.on("numVisits", (playerId, numVisits) => {
-      if (
-        players[socket.id].role == "Noble" &&
-        currTarget &&
-        currTarget == playerId
-      ) {
-        topText = players[playerId] + " was visited " + numVisits + " times.";
+    socket.on("numVisits", (playerId, visits) => {
+      const currRole = players[socket.id].role;
+
+      if (currRole == "Noble" && currTarget && currTarget == playerId) {
+        numVisits = players[playerId].name + " was visited " + visits + " times.";
+        currTarget = null;
+      } else if (currRole != "Noble") {
+        currTarget = null;
       }
-      currTarget = null;
     });
 
     socket.on("playerLeft", (playerId) => {
@@ -237,6 +238,9 @@
           {:else}
             <h3>You are voting for {players[currTarget].name}.</h3>
           {/if}
+        {/if}
+        {#if numVisits}
+          <h3>{numVisits}</h3>
         {/if}
       </div>
 

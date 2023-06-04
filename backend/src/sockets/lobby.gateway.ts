@@ -25,11 +25,13 @@ export class LobbyGateway {
   @SubscribeMessage('joinLobby')
   handleJoinLobby(socket: Socket, data: string): void {
     const lobbyId = data[0];
+    const pName = data[1];
+
     socket.join(lobbyId);
 
     // Initialize player object
     const p = new Player(socket.id, 0, 0);
-    p.setName(data[1]);
+    p.setName(pName);
 
     // Add player to lobby map list
     let lobbyList: Player[] = [];
@@ -37,6 +39,11 @@ export class LobbyGateway {
       lobbyList = this.lobbyMap.get(lobbyId);
     } else {
       console.log(`Game lobby ${lobbyId} created`);
+    }
+
+    let numMatches = 0;
+    while (lobbyList.some((player) => player.name === p.name)) {
+      p.setName(pName + ++numMatches);
     }
 
     lobbyList.push(p);

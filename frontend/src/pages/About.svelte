@@ -1,8 +1,7 @@
 <script>
-
-    import Navbar from "../generic/Navbar.svelte";
-
+  import Navbar from "../generic/Navbar.svelte";
 </script>
+
 <div class="min-h-screen flex flex-col">
   <Navbar />
 

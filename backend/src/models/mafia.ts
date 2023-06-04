@@ -5,7 +5,6 @@ import { clearInterval } from 'timers';
 interface MafiaPlayer {
   votes: number;
   role: string;
-  voteCasted: boolean;
   nextToKill: boolean;
   isHealed: boolean;
   numVisits: number;
@@ -97,7 +96,6 @@ export class Mafia {
       this.players[randId] = {
         votes: 0,
         role: role,
-        voteCasted: false,
         nextToKill: false,
         isHealed: false,
         numVisits: 0,
@@ -110,14 +108,13 @@ export class Mafia {
     }
 
     // Assign standard role to rest of players
-    for (const playerId in ids) {
-      console.log(`Player ${playerId} was assigned the role of Noble`);
-      server.to(this.lobbyId).emit('roleAssigned', playerId, 'Noble');
+    for (let i = 0; i < ids.length; i++) {
+      console.log(`Player ${ids[i]} was assigned the role of Noble`);
+      server.to(this.lobbyId).emit('roleAssigned', ids[i], 'Noble');
 
-      this.players[playerId] = {
+      this.players[ids[i]] = {
         votes: 0,
         role: 'Noble',
-        voteCasted: false,
         nextToKill: false,
         isHealed: false,
         numVisits: 0,
@@ -175,13 +172,18 @@ export class Mafia {
    * @param {string} votedId - The unique ID of the player being voted against.
    */
   public castVote(socketId: string, votedId: string) {
-    if (
-      this.dayNum > 1 &&
-      this.players[socketId] &&
-      !this.players[socketId].voteCasted &&
-      this.players[votedId]
-    ) {
-      this.players[socketId].voteCasted = true;
+    if (this.dayNum > 1 && this.players[socketId] && this.players[votedId]) {
+      const prevVoteId = this.players[socketId].prevActionId;
+
+      if (prevVoteId) {
+        this.players[prevVoteId].votes--;
+
+        if (this.players[socketId].role == 'King') {
+          this.players[prevVoteId].votes--;
+        }
+      }
+
+      this.players[socketId].prevActionId = votedId;
       this.players[votedId].votes++;
 
       if (this.players[socketId].role == 'King') {
@@ -222,7 +224,8 @@ export class Mafia {
       }
 
       // Reset casted vote
-      this.players[playerId].voteCasted = false;
+      this.players[playerId].prevActionId = null;
+      this.players[playerId].votes = 0;
     }
 
     // In the event of a tie
@@ -278,15 +281,15 @@ export class Mafia {
       for (const playerId in this.players) {
         const player = this.players[playerId];
 
+        server.to(this.lobbyId).emit('numVisits', playerId, player.numVisits);
+        this.resetNightStats(playerId);
+
         if (player.nextToKill) {
           if (!player.isHealed) {
             server.to(this.lobbyId).emit('playerKilled', playerId);
           }
 
           this.removePlayer(playerId);
-        } else {
-          server.to(this.lobbyId).emit('numVisits', playerId, player.numVisits);
-          this.resetNightStats(playerId);
         }
       }
 
@@ -395,6 +398,7 @@ export class Mafia {
     }
 
     // Perform role night action (if player has one)
+    console.log(currPlayer.role);
     switch (currPlayer.role) {
       case 'Assassin':
         this.players[otherPlayerId].nextToKill = true;
@@ -403,12 +407,20 @@ export class Mafia {
       case 'Herbalist':
         this.players[otherPlayerId].isHealed = true;
         this.players[otherPlayerId].numVisits++;
+        break;
       case 'Noble':
         this.players[otherPlayerId].numVisits++;
-      case 'King':
+        break;
       case 'Jester':
+        this.players[otherPlayerId].numVisits++;
+        break;
+      case 'King':
       default:
         break;
+    }
+
+    if (currPlayer.role != 'King') {
+      this.players[currPlayerId].prevActionId = otherPlayerId;
     }
   }
 

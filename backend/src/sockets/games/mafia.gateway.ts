@@ -52,7 +52,6 @@ export class MafiaGateway implements OnGatewayInit {
     GameGateway.setPlayerMap(lobbyId, playerMap);
 
     // Return lobby players to the socket
-    console.log([...playerMap.values()]);
     this.server
       .to(lobbyId)
       .emit('playerJoined', [...playerMap.values()], oldSockId);
