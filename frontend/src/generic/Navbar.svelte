@@ -1,25 +1,32 @@
 <script>
   import { onMount } from "svelte";
-  import { validateToken } from "../auth";
+  import { getMe } from "../auth";
+  import md5 from 'crypto-js/md5';
 
-  let loggedIn = false;
-  let isMenuOpen = false;
+  let user = null;
+
+  let isMobileMenuOpen = false;
+  let isProfileMenuOpen = false;
 
   onMount(async () => {
-    loggedIn = await validateToken();
+    user = await getMe();
   });
 
-  function toggleMenu() {
-    isMenuOpen = !isMenuOpen;
+  function toggleMobileMenu() {
+    isMobileMenuOpen = !isMobileMenuOpen;
   }
 
-  function search() {
-    // TODO: Handle search functionality
+  function toggleProfileMenu() {
+    isProfileMenuOpen = !isProfileMenuOpen;
   }
 
   function logOut() {
     localStorage.removeItem("token");
     window.location.reload();
+  }
+
+  function generateGravatar() {
+    return `https://www.gravatar.com/avatar/${md5(user.email)}?d=identicon&s=100`;
   }
 </script>
 
@@ -30,32 +37,9 @@
     </a>
 
     <div class="hidden lg:flex items-center">
-      <!-- <div class="relative">
-        <input
-          type="text"
-          class="bg-gray-200 w-0 sm:w-fit rounded-lg px-4 py-2 focus:outline-none focus:shadow-outline"
-          placeholder="Search for Games..."
-          on:input={search}
-        />
-        <div class="absolute right-0 top-0 mt-3 mr-4 text-gray-600">
-          <svg
-            class="h-4 w-4"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path d="M22 22l-6-6" />
-            <path d="M10 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0 0v4" />
-          </svg>
-        </div>
-      </div> -->
-
       <a href="/about" class="text-white hover:text-gray-200 p-2">About</a>
-      
-      {#if !loggedIn}
+
+      {#if !user}
         <div class="ml-4">
           <a
             href="/login"
@@ -73,27 +57,83 @@
           </a>
         </div>
       {:else}
-        <button on:click={logOut} class="border-2 border-white p-2 rounded-lg ml-4 text-white hover:border-gray-200 hover:text-gray-200">Logout</button>
+        <div class="relative flex flex-col px-6">
+          <button on:click={toggleProfileMenu} class="flex flex-row space-x-2 rounded-md px-3 py-1 items-center border border-white hover:brightness-75">
+            
+            <img
+              src={generateGravatar()}
+              alt="User"
+              class="w-10 h-10 rounded-full"
+            />
+            <h3 class="text-white text-lg">▾</h3>
+          </button>
+
+          {#if isProfileMenuOpen}
+            <dialog
+              class="absolute z-50 left-0 w-full top-full text-left text-white rounded-lg space-y-3 bg-tertiary shadow-lg"
+              open={isProfileMenuOpen}
+            >
+              <a class="hover:text-gray-300" href="/profile">Profile</a>
+              <button class="hover:text-gray-300 whitespace-nowrap" on:click={logOut}
+                >Log Out</button
+              >
+            </dialog>
+          {/if}
+        </div>
       {/if}
     </div>
 
-    <button class="lg:hidden text-white focus:outline-none" on:click={toggleMenu}>
-      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+    <button
+      class="lg:hidden text-white focus:outline-none"
+      on:click={toggleMobileMenu}
+    >
+      <svg
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
       </svg>
     </button>
   </div>
 
-  {#if isMenuOpen}
-    {#if !loggedIn}
-      <div class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2">
-        <a href="/login" class="block py-2 px-4 bg-white text-tertiary rounded-sm font-bold">Login</a>
-        <a href="/signup" class="block py-2 px-4 bg-quaternary text-white rounded-sm font-bold">Sign Up</a>
+  {#if isMobileMenuOpen}
+    {#if !user}
+      <div
+        class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2"
+      >
+        <a
+          href="/login"
+          class="block py-2 px-4 bg-white text-tertiary rounded-sm font-bold"
+          >Login</a
+        >
+        <a
+          href="/signup"
+          class="block py-2 px-4 bg-quaternary text-white rounded-sm font-bold"
+          >Sign Up</a
+        >
       </div>
     {:else}
-      <div class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2">
-        <button on:click={logOut} class="block py-2 px-4 bg-white min-w-full text-tertiary rounded-sm font-bold">Logout</button>
+      <div
+        class="bg-transparent mt-2 py-3 px-4 shadow-lg rounded-md lg:hidden text-center space-y-2"
+      >
+        <a
+          href="/profile"
+          class="block py-2 px-4 bg-white text-tertiary rounded-sm font-bold"
+          >Profile</a
+        >
+        <button
+          on:click={logOut}
+          class="block py-2 px-4 bg-white min-w-full text-tertiary rounded-sm font-bold"
+          >Logout</button
+        >
       </div>
     {/if}
-    {/if}
+  {/if}
 </nav>

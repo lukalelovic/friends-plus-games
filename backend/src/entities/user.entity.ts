@@ -17,4 +17,16 @@ export class User {
   @Column()
   @Length(7, 30)
   password: string;
+
+  @Column({ default: 0 })
+  numWins: number;
+
+  @Column({ default: 0 })
+  numLosses: number;
+
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  dateCreated: Date;
+
+  @Column({ default: false })
+  isAdmin: boolean;
 }

@@ -6,7 +6,11 @@
   let username = "";
   let password = "";
 
+  let errorText = "";
+
   async function handleSubmit() {
+    errorText = "";
+
     try {
       const response = await axios.post(`${PROD_URI}/users/login`, {
         username: username,
@@ -18,6 +22,7 @@
       navigate('/');
     } catch (error) {
       console.error(error);
+      errorText = error.response.data.message;
     }
   }
 </script>
@@ -69,6 +74,11 @@
           >Sign Up</a
         >
       </div>
+
+      {#if errorText != ""}
+        <h3 class="font-bold text-red-500 text-center">{errorText}</h3>
+      {/if}
+
       <button
         class="bg-secondary hover:bg-tertiary text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-24"
         type="submit"

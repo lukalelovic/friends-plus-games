@@ -8,8 +8,15 @@
   let password = "";
   let confirmPassword = "";
 
+  let errorText = "";
+
   async function handleSubmit() {
-    if (password !== confirmPassword) return;
+    if (password !== confirmPassword) {
+      errorText = "Passwords do not match."
+      return;
+    };
+
+    errorText = "";
 
     try {
       const response = await axios.post(`${PROD_URI}/users/signup`, {
@@ -23,6 +30,7 @@
       navigate("/");
     } catch (error) {
       console.log(error);
+      errorText = error.response.data.message;
     }
   }
 </script>
@@ -87,18 +95,17 @@
       />
     </div>
     <div class="flex flex-col space-y-2">
-      <a
-        class="inline-block align-baseline font-bold text-quaternary hover:text-indigo-500"
-        href="#"
-      >
-        Forgot Password?
-      </a>
       <div class="text-gray-600">
-        Don't have an account?
+        Already have an account?
         <a class="font-bold text-secondary hover:text-tertiary" href="/login"
           >Login</a
         >
       </div>
+
+      {#if errorText != ""}
+        <h3 class="font-bold text-red-500 text-center">{errorText}</h3>
+      {/if}
+      
       <button
         class="bg-secondary hover:bg-tertiary text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-24"
         type="submit"

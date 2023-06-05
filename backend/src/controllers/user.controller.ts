@@ -3,12 +3,11 @@ import {
   Post,
   Body,
   Request,
-  UseGuards,
   Get,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { LoginDto, SignupDto } from '../dtos/auth.dto';
-import { JwtAuthGuard } from '../jwt-auth.guard';
 
 @Controller('users')
 export class UserController {
@@ -33,11 +32,11 @@ export class UserController {
     return { isValid };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getAuthenticatedUser(@Request() req) {
-    const userId = req.user.id;
-    const user = await this.userService.findById(userId);
+    const user = await this.userService.getUserByToken(
+      req.headers.authorization.split(' ')[1],
+    );
     return user;
   }
 }

@@ -29,3 +29,30 @@ export async function validateToken() {
 
   return loggedIn;
 }
+
+export async function getMe() {
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await axios.get(
+      `${PROD_URI}/users/me`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    user = response.data;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+
+  return user;
+}

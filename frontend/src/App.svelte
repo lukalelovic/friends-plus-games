@@ -7,6 +7,7 @@
     import Tag from "./games/Tag.svelte";
     import Mafia from "./games/mafia/Mafia.svelte";
     import About from "./pages/About.svelte";
+    import Profile from "./pages/Profile.svelte";
 </script>
 
 <Router>
@@ -15,6 +16,7 @@
     <Route path="/signup" component={Signup} />
     <Route path="/lobby/*" component={Lobby} />
     <Route path="/about" component={About} />
+    <Route path="/profile" component={Profile} />
 
     <!-- Game Routes -->
     <Route path="/game/tag/*" component={Tag}/>

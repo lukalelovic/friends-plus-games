@@ -387,14 +387,16 @@ export class Mafia {
     // Player already clicked on someone?
     if (currPlayer.prevActionId) {
       if (currPlayer.role == 'Assassin') {
-        this.players[currPlayer.prevActionId].numVisits--;
         this.players[currPlayer.prevActionId].nextToKill = false;
       } else if (currPlayer.role == 'Herbalist') {
-        this.players[currPlayer.prevActionId].numVisits--;
         this.players[currPlayer.prevActionId].isHealed = false;
-      } else if (currPlayer.role == 'Noble') {
+      }
+
+      if (currPlayer.role != 'King') {
         this.players[currPlayer.prevActionId].numVisits--;
       }
+    } else if (currPlayer.role != 'King') {
+      this.players[currPlayerId].numVisits++;
     }
 
     // Perform role night action (if player has one)

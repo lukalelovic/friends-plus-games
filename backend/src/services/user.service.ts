@@ -17,6 +17,14 @@ export class UserService {
   async signup(signupDto: SignupDto): Promise<{ token: string }> {
     const { username, email, password } = signupDto;
 
+    const existingUser = await this.userRepository.findOne({
+      where: [{ email }, { userName: username }],
+    });
+
+    if (existingUser) {
+      throw new UnauthorizedException('Username or email already exists.');
+    }
+
     const user = new User();
     user.userName = username;
     user.email = email;
@@ -37,7 +45,7 @@ export class UserService {
     });
 
     if (!user || !(await compare(password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials.');
     }
 
     const payload = { username };
@@ -56,6 +64,19 @@ export class UserService {
       return !!user;
     } catch (err) {
       return false;
+    }
+  }
+
+  async getUserByToken(token: string): Promise<User> {
+    try {
+      const payload = this.jwtService.verify(token);
+      const user = await this.userRepository.findOne({
+        where: { userName: payload.username },
+      });
+
+      return user;
+    } catch (err) {
+      return null;
     }
   }
 

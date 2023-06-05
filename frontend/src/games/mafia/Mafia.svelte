@@ -111,7 +111,7 @@
       const currRole = players[socket.id].role;
 
       if (currRole == "Noble" && currTarget && currTarget == playerId) {
-        numVisits = players[playerId].name + " was visited " + visits + " times.";
+        numVisits = players[playerId].name + " was visited by (or visited) " + visits + " player(s).";
         currTarget = null;
       } else if (currRole != "Noble") {
         currTarget = null;
@@ -206,16 +206,16 @@
               Assassin - Wins by eliminating all players. Each night the assassin eliminates 1 player, unless that player is healed.
             </div>
             <div class="flex space-x-2 flex-wrap">
-              King - 1 vote counts as two each voting day. Wins when the Assassin is voted out.
+              King - 1 vote counts as two each voting day. Wins when the Assassin is voted out. Has no night action.
             </div>
             <div class="flex space-x-2 flex-wrap">
               Herbalist - Can heal 1 player each night (except self). Wins with the King.
             </div>
             <div class="flex space-x-2 flex-wrap">
-              Jester - Wins when voted out.
+              Jester - Wins when voted out. Can visit someone each night to throw off the Noble.
             </div>
             <div class="flex space-x-2 flex-wrap">
-              Noble - Can spy on 1 player each night, and see how many people visited that player. Wins with the King.
+              Noble - Can spy on 1 player each night. Sees how many people visited that player, or if that player potentially visited someone else. Wins with the King.
             </div>
           </div>
         </div>
