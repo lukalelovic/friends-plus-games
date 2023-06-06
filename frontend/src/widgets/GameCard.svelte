@@ -3,7 +3,7 @@
   // import { validateToken } from "../auth";
 
   export let card;
-  let showModal = false;
+  // let showModal = false;
 
   function handleClick() {
     window.location.href = `lobby/${card.title}/`+generateLobbyID();
@@ -19,13 +19,7 @@
 <button
   on:click={handleClick}
   class="w-full max-w-sm rounded overflow-hidden shadow-lg bg-tertiary hover:shadow-2xl">
-  <img src={card.gameImage} alt="Game Image" class="w-full h-auto">
-
-  <!-- {#if showModal}
-    <dialog id="guest-modal">
-      <button on:click={() => showModal = false}>x</button>
-    </dialog>
-  {/if} -->
+  <img src={card.gameImage} alt="Game" class="w-full h-auto" />
   
   <div class="px-4 py-3 text-white">
     <div class="font-bold text-xl mb-2">{card.title}</div>

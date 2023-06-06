@@ -285,14 +285,12 @@ export class Mafia {
         const player = this.players[playerId];
 
         server.to(this.lobbyId).emit('numVisits', playerId, player.numVisits);
-        this.resetNightStats(playerId);
 
-        if (player.nextToKill) {
-          if (!player.isHealed) {
-            server.to(this.lobbyId).emit('playerKilled', playerId);
-          }
-
+        if (player.nextToKill && !player.isHealed) {
+          server.to(this.lobbyId).emit('playerKilled', playerId);
           this.removePlayer(playerId);
+        } else {
+          this.resetNightStats(playerId);
         }
       }
 
@@ -387,8 +385,6 @@ export class Mafia {
 
     // Player already clicked on someone?
     if (currPlayer.prevActionId) {
-      console.log(this.players[currPlayer.prevActionId]);
-
       if (currPlayer.role == 'Assassin') {
         this.players[currPlayer.prevActionId].nextToKill = false;
       } else if (currPlayer.role == 'Herbalist') {
