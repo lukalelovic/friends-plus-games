@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { LobbyGateway } from './lobby.gateway';
-import { TagGateway } from './games/tag.gateway';
-import { GameGateway } from './games/game.gateway';
-import { MafiaGateway } from './games/mafia.gateway';
+import { TagGateway } from './games/gateways/tag.gateway';
+import { GameGateway } from './games/gateways/game.gateway';
+import { MafiaGateway } from './games/gateways/mafia.gateway';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
+  imports: [AuthModule],
   providers: [
     {
       provide: 'SOCKET_IO',

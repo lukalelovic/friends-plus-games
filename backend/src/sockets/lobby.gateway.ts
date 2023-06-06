@@ -4,8 +4,8 @@ import {
   SubscribeMessage,
 } from '@nestjs/websockets';
 import { Dependencies } from '@nestjs/common';
-import { GameGateway } from './games/game.gateway';
-import { Player } from '../models/player';
+import { GameGateway } from './games/gateways/game.gateway';
+import { Player } from './games/models/player';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({

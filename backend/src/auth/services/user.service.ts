@@ -5,6 +5,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { LoginDto, SignupDto } from '../dtos/auth.dto';
+import { StatsDto } from 'src/auth/dtos/stats.dto';
 
 @Injectable()
 export class UserService {
@@ -86,5 +87,24 @@ export class UserService {
     });
 
     return user;
+  }
+
+  async updateStats(stats: StatsDto): Promise<void> {
+    const { token, didWin, didLose } = stats;
+
+    const user = await this.getUserByToken(token);
+    if (!user) {
+      throw new UnauthorizedException('Invalid token.');
+    }
+
+    if (didWin) {
+      user.numWins++;
+    }
+
+    if (didLose) {
+      user.numLosses++;
+    }
+
+    await this.userRepository.save(user);
   }
 }

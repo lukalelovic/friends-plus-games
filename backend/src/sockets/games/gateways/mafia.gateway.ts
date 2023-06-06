@@ -6,15 +6,19 @@ import {
 } from '@nestjs/websockets';
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { Player } from '../../models/player';
+import { Player } from '../models/player';
 import { GameGateway } from './game.gateway';
-import { Mafia } from 'src/models/mafia';
+import { Mafia } from 'src/sockets/games/models/mafia';
+import { UserService } from 'src/auth/services/user.service';
+import { StatsDto } from 'src/auth/dtos/stats.dto';
 
 @WebSocketGateway({
   path: '/mafia',
 })
 @Injectable()
 export class MafiaGateway implements OnGatewayInit {
+  constructor(private readonly userService: UserService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -106,6 +110,21 @@ export class MafiaGateway implements OnGatewayInit {
     }
 
     this.gameMap.get(lobbyId).performNightAction(socket.id, playerId);
+  }
+
+  @SubscribeMessage('gameEnd')
+  handleGameEnd(socket: Socket, data: string) {
+    const lobbyId = data[0];
+
+    const stats = new StatsDto();
+
+    stats.token = data[1];
+
+    stats.didWin = this.gameMap.get(lobbyId).didPlayerWin(socket.id);
+
+    stats.didLose = this.gameMap.get(lobbyId).getDayNum() < 15 && !stats.didWin;
+
+    this.userService.updateStats(stats);
   }
 
   handleDisconnect(socket: Socket): void {

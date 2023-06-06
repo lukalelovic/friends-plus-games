@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Player } from '../../models/player';
+import { Player } from '../models/player';
 
 @Injectable()
 export class GameGateway {

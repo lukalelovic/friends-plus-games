@@ -27,6 +27,7 @@ export class Mafia {
 
   private evilWon: boolean;
   private goodWon: boolean;
+  private jesterWon: boolean;
 
   private players: { [playerId: string]: MafiaPlayer };
 
@@ -246,6 +247,7 @@ export class Mafia {
     while (this.dayNum < 15 && !this.evilWon && !this.goodWon) {
       this.evilWon = false;
       this.goodWon = false;
+      this.jesterWon = false;
 
       await this.dayLoop(server);
 
@@ -260,6 +262,7 @@ export class Mafia {
             break;
           } else if (this.players[winnerId].role == 'Jester') {
             server.to(this.lobbyId).emit('jesterWin', winnerId);
+            this.jesterWon = true;
             return;
           } else if (Object.keys(this.players).length == 3) {
             this.evilWon = true;
@@ -299,8 +302,6 @@ export class Mafia {
 
       this.dayNum++;
     }
-
-    // TODO: jester wins
 
     if (this.dayNum >= 15) {
       server.to(this.lobbyId).emit('drawWin');
@@ -386,6 +387,8 @@ export class Mafia {
 
     // Player already clicked on someone?
     if (currPlayer.prevActionId) {
+      console.log(this.players[currPlayer.prevActionId]);
+
       if (currPlayer.role == 'Assassin') {
         this.players[currPlayer.prevActionId].nextToKill = false;
       } else if (currPlayer.role == 'Herbalist') {
@@ -400,7 +403,6 @@ export class Mafia {
     }
 
     // Perform role night action (if player has one)
-    console.log(currPlayer.role);
     switch (currPlayer.role) {
       case 'Assassin':
         this.players[otherPlayerId].nextToKill = true;
@@ -436,5 +438,29 @@ export class Mafia {
     player.prevActionId = null;
 
     this.players[playerId] = player;
+  }
+
+  public didPlayerWin(playerId: string): boolean {
+    const currPlayer = this.players[playerId];
+    if (!currPlayer) {
+      return;
+    }
+
+    if (this.evilWon && currPlayer.role == 'Assassin') {
+      return true;
+    } else if (this.goodWon) {
+      switch (currPlayer.role) {
+        case 'King':
+        case 'Herbalist':
+        case 'Noble':
+          return true;
+        default:
+          return false;
+      }
+    } else if (this.jesterWon && currPlayer.role == 'Jester') {
+      return true;
+    }
+
+    return false;
   }
 }

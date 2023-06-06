@@ -6,7 +6,7 @@ import {
 } from '@nestjs/websockets';
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { Player } from '../../models/player';
+import { Player } from '../models/player';
 import { GameGateway } from './game.gateway';
 
 @WebSocketGateway({

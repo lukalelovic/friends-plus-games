@@ -124,11 +124,14 @@
 
     socket.on("drawWin", () => {
       topText = "Game Draw";
+      gameEnd();
+
       countDownValue = null;
       currTarget = null;
     });
 
     socket.on("evilWin", () => {
+      gameEnd();
       let assassin = null;
 
       for (const id in players) {
@@ -145,12 +148,16 @@
 
     socket.on("goodWin", () => {
       topText = "King Wins!";
+      gameEnd();
+
       countDownValue = null;
       currTarget = null;
     });
 
     socket.on("jesterWin", (jesterId) => {
       topText = "Jester "+players[jesterId].name+" Wins!";
+      gameEnd();
+
       countDownValue = null;
       currTarget = null;
     });
@@ -186,6 +193,13 @@
 
   function closeModal() {
     showDialog = false;
+  }
+
+  function gameEnd() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    socket.emit('gameEnd', lobbyId, token);
   }
 </script>
 
