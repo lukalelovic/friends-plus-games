@@ -15,7 +15,7 @@ interface MafiaPlayer {
  * Stores Mafia game values
  */
 export class Mafia {
-  private lobbyId: string; // lobby id
+  private lobbyId: string;
 
   private assignRolesCountdown: number;
 

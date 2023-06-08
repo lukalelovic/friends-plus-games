@@ -1,9 +1,9 @@
 <script>
   import { onMount } from "svelte";
   import { io } from "socket.io-client";
-  import { MAFIA_PATH, PROD_SOCKET_URI } from "../../config";
-  import { joinGame } from "../generic/joinGame";
-  import Navbar from "../../generic/Navbar.svelte";
+  import { MAFIA_PATH, PROD_SOCKET_URI } from "../config";
+  import { joinGame } from "./generic/joinGame";
+  import Navbar from "../generic/Navbar.svelte";
 
   let socket;
   let lobbyId;

@@ -6,6 +6,7 @@ import { TagGateway } from './games/gateways/tag.gateway';
 import { GameGateway } from './games/gateways/game.gateway';
 import { MafiaGateway } from './games/gateways/mafia.gateway';
 import { AuthModule } from 'src/auth/auth.module';
+import { WackboxGateway } from './games/gateways/wackbox.gateway';
 
 @Module({
   imports: [AuthModule],
@@ -26,6 +27,7 @@ import { AuthModule } from 'src/auth/auth.module';
     TagGateway,
     MafiaGateway,
     GameGateway,
+    WackboxGateway,
   ],
 })
 export class SocketsModule {}
