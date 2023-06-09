@@ -68,7 +68,7 @@
         maxSize = 10;
         break;
       case "wackbox":
-        minSize = 0;
+        minSize = 3;
         maxSize = 15;
         break;
       default:
