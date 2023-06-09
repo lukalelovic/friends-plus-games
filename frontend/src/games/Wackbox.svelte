@@ -13,6 +13,9 @@
   let myAnswer = "";
   let didAnswer = false;
 
+  let isVoting = false;
+  let votedId = null;
+
   let promptCountdownVal = 10;
 
   let currPrompt = "";
@@ -43,7 +46,7 @@
 
       currPlayers.forEach(player => {
         players[player.id] = {
-          name: player.name + (player.id == socket.id) ? ' (YOU) ' : '',
+          name: player.name + ((player.id == socket.id) ? ' (YOU) ' : ''),
           score: 0,
         };
       });
@@ -52,6 +55,7 @@
     socket.on('promptCount', (pCountdown) => {
       promptCountdownVal = pCountdown;
 
+      isVoting = false;
       currAnswers = {};
       didAnswer = false;
       myAnswer = "";
@@ -70,14 +74,16 @@
 
     socket.on("voteWait", (voteWait) => {
       promptCountdownVal = voteWait;
+      isVoting = true;
     });
 
-    socket.on('roundAnswers', (answers) => {
+    socket.on('roundAnswers', (currRound, answers) => {
       currAnswers = answers;
     });
 
     socket.on('scoreUpdate', (playerId, s) => {
       players[playerId].score = s;
+      votedId = null;
     });
 
     socket.on('gameWinner', (playerId) => {
@@ -98,8 +104,9 @@
 
   function handleCastVote(playerId) {
     // Can't vote for self
-    if (playerId == socket.id) return;
+    if (playerId == socket.id || !isVoting || votedId) return;
 
+    votedId = playerId;
     socket.emit('submitVote', lobbyId, playerId);
   }
 </script>
@@ -120,7 +127,7 @@
       {/if}
 
       {#if promptCountdownVal}
-        {#if currAnswers.length}
+        {#if isVoting}
           <h3>Voting ends in</h3>
         {:else if currPrompt != ""}
           <h3>Answers in</h3>
@@ -146,6 +153,10 @@
         {/if}
       {/if}
 
+      {#if votedId}
+        <h3>You voted for {players[votedId].name}</h3>
+      {/if}
+
       <div class="min-w-full flex flex-col justify-center p-3 space-y-2">
         {#each Object.entries(players) as [playerId, player]}
           <button on:click={() => handleCastVote(playerId)} class="flex flex-row justify-center items-center bg-[#5d119f] hover:bg-[#7e19d5] rounded-lg p-2 space-x-5">
@@ -153,6 +164,9 @@
 
             {#if currAnswers[playerId]}
               <div>: {currAnswers[playerId]}</div>
+            {/if}
+            {#if player.score > 0}
+              <div>- {player.score} points</div>
             {/if}
           </button>
         {/each}

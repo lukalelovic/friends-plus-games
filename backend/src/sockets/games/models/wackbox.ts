@@ -72,7 +72,7 @@ export class Wackbox {
         .emit(
           'roundAnswers',
           this.currentRound,
-          this.rounds[this.currentRound].answers,
+          this.rounds[this.currentRound - 1].answers,
         );
 
       // Begin voting
@@ -178,6 +178,9 @@ export class Wackbox {
     const currRound = this.rounds[this.currentRound - 1];
 
     Object.entries(currRound.votes).forEach(([playerId, votes]) => {
+      console.log(playerId, votes);
+      console.log(votes == undefined);
+
       // Points earned based on votes divided by # of players
       const roundScore =
         1000 * ((votes + 1) / Object.keys(this.players).length);
@@ -245,12 +248,16 @@ export class Wackbox {
     }
 
     // Player already voted? Don't let them vote again
-    const prevId = this.players[playerId].prevVoteId;
-    if (prevId) {
+    if (this.players[playerId].prevVoteId) {
       return;
     }
 
-    this.rounds[this.currentRound - 1].votes[votedId]++;
+    if (votedId in this.rounds[this.currentRound - 1].votes) {
+      this.rounds[this.currentRound - 1].votes[votedId]++;
+    } else {
+      this.rounds[this.currentRound - 1].votes[votedId] = 1;
+    }
+
     this.players[playerId].prevVoteId = votedId;
   }
 
