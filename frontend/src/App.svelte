@@ -8,6 +8,7 @@
     import Mafia from "./games/Mafia.svelte";
     import About from "./pages/About.svelte";
     import Profile from "./pages/Profile.svelte";
+    import Wackbox from "./games/Wackbox.svelte";
 </script>
 
 <Router>
@@ -21,4 +22,5 @@
     <!-- Game Routes -->
     <Route path="/game/tag/*" component={Tag}/>
     <Route path="/game/mafia/*" component={Mafia}/>
+    <Route path="/game/wackbox/*" component={Wackbox}/>
 </Router>

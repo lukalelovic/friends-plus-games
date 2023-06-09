@@ -4,12 +4,11 @@ interface WackboxPlayer {
   id: string;
   score: number;
   prevVoteId: string | null;
-  didAnswer: boolean;
 }
 
 interface GameRound {
   prompt: string;
-  answers: string[];
+  answers: { [playerId: string]: string | null };
   votingInProgress: boolean;
   votes: { [playerId: string]: number };
 }
@@ -84,6 +83,7 @@ export class Wackbox {
 
     // Game done, emit winner
     server.to(this.lobbyId).emit('gameWinner', this.getWinner());
+    // TODO: call user service with game winner
   }
 
   private async choosePrompt(server: Server): Promise<void> {
@@ -95,7 +95,7 @@ export class Wackbox {
 
     this.rounds[this.currentRound - 1] = {
       prompt: randPrompt,
-      answers: [],
+      answers: {},
       votingInProgress: false,
       votes: {},
     };
@@ -135,7 +135,7 @@ export class Wackbox {
       const waitInterval = setInterval(() => {
         if (
           answerWait <= 0 ||
-          this.rounds[this.currentRound - 1].answers.length ==
+          Object.keys(this.rounds[this.currentRound - 1].answers).length ==
             this.players.length
         ) {
           clearInterval(waitInterval);
@@ -155,7 +155,8 @@ export class Wackbox {
       const waitInterval = setInterval(() => {
         if (
           answerWait <= 0 ||
-          this.rounds[this.currentRound - 1].votes.length == this.players.length
+          Object.keys(this.rounds[this.currentRound - 1].votes).length ==
+            this.players.length
         ) {
           clearInterval(waitInterval);
           resolve(0);
@@ -185,7 +186,6 @@ export class Wackbox {
     // TODO: reset necessary player + round stats at end of each round
     this.players.forEach((player) => {
       player.prevVoteId = null;
-      player.didAnswer = false;
     });
 
     this.rounds[this.currentRound - 1].votingInProgress = false;
@@ -208,7 +208,6 @@ export class Wackbox {
       id: playerId,
       score: 0,
       prevVoteId: null,
-      didAnswer: false,
     };
   }
 
@@ -225,11 +224,11 @@ export class Wackbox {
     }
 
     // Player already answered?
-    if (this.players[playerId].didAnswer) {
+    if (playerId in this.rounds[this.currentRound - 1].answers) {
       return;
     }
 
-    this.rounds[this.currentRound - 1].answers.push(answer);
+    this.rounds[this.currentRound - 1].answers[playerId] = answer;
     this.players[playerId].didAnswer = true;
   }
 

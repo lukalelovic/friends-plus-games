@@ -25,6 +25,10 @@ export class WackboxGateway implements OnGatewayInit {
     server.engine.pingInterval = this.TICK_RATE;
   }
 
+  handleConnection(socket: Socket): void {
+    console.log(`Client ${socket.id} connected to the wackbox namespace`);
+  }
+
   @SubscribeMessage('joinGame')
   handleJoinGame(socket: Socket, data: string): void {
     const lobbyId = data[0];

@@ -56,7 +56,7 @@
         players[player.id] = {
           name: player.name,
           isAlive: true,
-          roll: null,
+          role: null,
         };
       });
     });
