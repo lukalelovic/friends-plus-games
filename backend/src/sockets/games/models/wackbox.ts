@@ -16,7 +16,7 @@ interface GameRound {
 export class Wackbox {
   private lobbyId: string;
 
-  private players: WackboxPlayer[];
+  private players: { [playerId: string]: WackboxPlayer };
   private rounds: GameRound[];
 
   private currentRound: number;
@@ -42,7 +42,7 @@ export class Wackbox {
   constructor(lobbyId: string) {
     this.lobbyId = lobbyId;
 
-    this.players = [];
+    this.players = {};
     this.rounds = [];
 
     this.currentRound = 0;
@@ -53,11 +53,18 @@ export class Wackbox {
       // Increment current round
       this.currentRound++;
 
+      this.rounds[this.currentRound - 1] = {
+        prompt: null,
+        answers: {},
+        votingInProgress: false,
+        votes: {},
+      };
+
       // Choose round prompt
-      this.choosePrompt(server);
+      await this.choosePrompt(server);
 
       // Wait 60 seconds (or until all players have answered)
-      await this.answerLoop();
+      await this.answerLoop(server);
 
       // Emit all answers (for frontend to display)
       server
@@ -72,7 +79,7 @@ export class Wackbox {
       this.rounds[this.currentRound - 1].votingInProgress = true;
 
       // Wait another 60 seconds for voting or until votes array size equals # of players
-      await this.voteLoop();
+      await this.voteLoop(server);
 
       // End voting and update player scores
       this.endVoting(server);
@@ -93,12 +100,7 @@ export class Wackbox {
     const randNdx = Math.floor(Math.random() * this.prompts.length);
     const randPrompt = this.prompts.splice(randNdx, 1)[0];
 
-    this.rounds[this.currentRound - 1] = {
-      prompt: randPrompt,
-      answers: {},
-      votingInProgress: false,
-      votes: {},
-    };
+    this.rounds[this.currentRound - 1].prompt = randPrompt;
 
     // Emit chosen prompt
     server.to(this.lobbyId).emit('roundPrompt', this.currentRound, randPrompt);
@@ -128,7 +130,7 @@ export class Wackbox {
     });
   }
 
-  private answerLoop(): Promise<number> {
+  private answerLoop(server: Server): Promise<number> {
     return new Promise<number>((resolve) => {
       let answerWait = 60;
 
@@ -136,34 +138,36 @@ export class Wackbox {
         if (
           answerWait <= 0 ||
           Object.keys(this.rounds[this.currentRound - 1].answers).length ==
-            this.players.length
+            Object.keys(this.players).length
         ) {
           clearInterval(waitInterval);
           resolve(0);
           return;
         }
 
+        server.to(this.lobbyId).emit('answerWait', answerWait);
         answerWait--;
       }, this.SEC_INTERVAL);
     });
   }
 
-  private voteLoop(): Promise<number> {
+  private voteLoop(server: Server): Promise<number> {
     return new Promise<number>((resolve) => {
-      let answerWait = 60;
+      let voteWait = 60;
 
       const waitInterval = setInterval(() => {
         if (
-          answerWait <= 0 ||
+          voteWait <= 0 ||
           Object.keys(this.rounds[this.currentRound - 1].votes).length ==
-            this.players.length
+            Object.keys(this.players).length
         ) {
           clearInterval(waitInterval);
           resolve(0);
           return;
         }
 
-        answerWait--;
+        server.to(this.lobbyId).emit('voteWait', voteWait);
+        voteWait--;
       }, this.SEC_INTERVAL);
     });
   }
@@ -175,7 +179,8 @@ export class Wackbox {
 
     Object.entries(currRound.votes).forEach(([playerId, votes]) => {
       // Points earned based on votes divided by # of players
-      const roundScore = 1000 * ((votes + 1) / this.players.length);
+      const roundScore =
+        1000 * ((votes + 1) / Object.keys(this.players).length);
 
       this.players[playerId].score += roundScore;
       server.emit('scoreUpdate', playerId, this.players[playerId].score);
@@ -184,8 +189,8 @@ export class Wackbox {
 
   private resetStats(): void {
     // TODO: reset necessary player + round stats at end of each round
-    this.players.forEach((player) => {
-      player.prevVoteId = null;
+    Object.keys(this.players).forEach((playerId) => {
+      this.players[playerId].prevVoteId = null;
     });
 
     this.rounds[this.currentRound - 1].votingInProgress = false;
@@ -199,7 +204,7 @@ export class Wackbox {
     return this.rounds;
   }
 
-  public getPlayers(): WackboxPlayer[] {
+  public getPlayers(): { [playerId: string]: WackboxPlayer } {
     return this.players;
   }
 
@@ -229,7 +234,6 @@ export class Wackbox {
     }
 
     this.rounds[this.currentRound - 1].answers[playerId] = answer;
-    this.players[playerId].didAnswer = true;
   }
 
   public castVote(playerId: string, votedId: string) {

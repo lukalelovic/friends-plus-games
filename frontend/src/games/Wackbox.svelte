@@ -13,8 +13,9 @@
   let myAnswer = "";
   let didAnswer = false;
 
-  let promptCountdownVal = null;
-  let currPrompt = "Test prompt";
+  let promptCountdownVal = 10;
+
+  let currPrompt = "";
   let roundNum = 0;
 
   let winnerId = null;
@@ -42,7 +43,7 @@
 
       currPlayers.forEach(player => {
         players[player.id] = {
-          name: player.name,
+          name: player.name + (player.id == socket.id) ? ' (YOU) ' : '',
           score: 0,
         };
       });
@@ -61,6 +62,14 @@
 
       currPrompt = prompt;
       roundNum = currRound;
+    });
+
+    socket.on("answerWait", (answerWait) => {
+      promptCountdownVal = answerWait;
+    });
+
+    socket.on("voteWait", (voteWait) => {
+      promptCountdownVal = voteWait;
     });
 
     socket.on('roundAnswers', (answers) => {
@@ -102,7 +111,7 @@
     <div class="wackbox flex flex-col items-center min-h-screen text-white">
       <h1 class="text-3xl p-3">Wackbox</h1>
       
-      {#if roundNum != null}
+      {#if roundNum > 0}
         <h2 class="text-md p-3">Round {roundNum}</h2>
       {/if}
 
@@ -111,7 +120,13 @@
       {/if}
 
       {#if promptCountdownVal}
-        <h3>Prompt in</h3>
+        {#if currAnswers.length}
+          <h3>Voting ends in</h3>
+        {:else if currPrompt != ""}
+          <h3>Answers in</h3>
+        {:else}
+          <h3>Prompt in</h3>
+        {/if}
         <h3>{promptCountdownVal}</h3>
       {/if}
       {#if currPrompt != ""}
@@ -131,7 +146,7 @@
         {/if}
       {/if}
 
-      <div class="min-w-full flex flex-col justify-center p-3">
+      <div class="min-w-full flex flex-col justify-center p-3 space-y-2">
         {#each Object.entries(players) as [playerId, player]}
           <button on:click={() => handleCastVote(playerId)} class="flex flex-row justify-center items-center bg-[#5d119f] hover:bg-[#7e19d5] rounded-lg p-2 space-x-5">
             <div>{player.name}</div>

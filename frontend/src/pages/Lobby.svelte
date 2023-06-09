@@ -66,6 +66,15 @@
       case "mafia":
         minSize = 4;
         maxSize = 10;
+        break;
+      case "wackbox":
+        minSize = 3;
+        maxSize = 15;
+        break;
+      default:
+        minSize = 1;
+        maxSize = 20;
+        break;
     }
 
     if (playerNames.length < minSize) {

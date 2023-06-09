@@ -56,17 +56,20 @@ export class WackboxGateway implements OnGatewayInit {
       .to(lobbyId)
       .emit('playerJoined', [...playerMap.values()], oldSockId);
 
-    console.log(`Player ${socket.id} joined mafia game ${lobbyId}`);
+    console.log(`Player ${socket.id} joined wackbox game ${lobbyId}`);
 
     // If prompt countdown has not begun, initialize game, add player, and start it
     if (!this.gameMap.has(lobbyId)) {
       this.gameMap.set(lobbyId, new Wackbox(lobbyId));
-
-      this.gameMap.get(lobbyId).addPlayer(socket.id);
       this.gameMap.get(lobbyId).gameLoop(this.server);
-    } else {
-      this.gameMap.get(lobbyId).addPlayer(socket.id);
     }
+
+    // Old id joined game? Remove it
+    if (this.gameMap.get(lobbyId).getPlayers()[oldSockId]) {
+      this.gameMap.get(lobbyId).removePlayer(oldSockId);
+    }
+
+    this.gameMap.get(lobbyId).addPlayer(socket.id);
   }
 
   @SubscribeMessage('submitAnswer')
@@ -74,10 +77,7 @@ export class WackboxGateway implements OnGatewayInit {
     const lobbyId = data[0];
     const answer = data[1];
 
-    const player = this.gameMap
-      .get(lobbyId)
-      .getPlayers()
-      .find((p) => p.id == socket.id);
+    const player = this.gameMap.get(lobbyId).getPlayers()[socket.id];
 
     if (!player) {
       console.error(
