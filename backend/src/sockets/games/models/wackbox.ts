@@ -178,15 +178,14 @@ export class Wackbox {
     const currRound = this.rounds[this.currentRound - 1];
 
     Object.entries(currRound.votes).forEach(([playerId, votes]) => {
-      console.log(playerId, votes);
-      console.log(votes == undefined);
+      if (playerId in this.players) {
+        // Points earned based on votes divided by # of players
+        const roundScore =
+          1000 * ((votes + 1) / Object.keys(this.players).length);
 
-      // Points earned based on votes divided by # of players
-      const roundScore =
-        1000 * ((votes + 1) / Object.keys(this.players).length);
-
-      this.players[playerId].score += roundScore;
-      server.emit('scoreUpdate', playerId, this.players[playerId].score);
+        this.players[playerId].score += roundScore;
+        server.emit('scoreUpdate', playerId, this.players[playerId].score);
+      }
     });
   }
 
