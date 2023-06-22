@@ -14,33 +14,31 @@
 
 <button
   on:click={handleClick}
-  class="w-full max-w-4xl rounded overflow-hidden shadow-lg bg-tertiary hover:shadow-2xl flex"
+  class="flex flex-wrap items-center rounded shadow-lg bg-tertiary hover:shadow-2xl"
 >
-  <div class="flex flex-wrap min-w-full justify-center sm:justify-start items-center">
-    <img
-      src={"games/" + card.gameImage}
-      alt="Game"
-      class="w-full sm:w-1/2 h-auto object-cover"
-    />
+  <img
+    src={"games/" + card.gameImage}
+    alt="Game"
+    class="w-full sm:w-1/2 h-auto object-cover"
+  />
 
-    <div class="flex flex-col justify-center items-center px-4 py-3 text-white">
-      <p class="text-white text-center text-lg p-3 italic">Featured Game</p>
+  <div class="flex flex-col w-full sm:w-1/2 text-white">
+    <p class="text-white text-center text-lg p-3 italic">Featured Game</p>
 
-      <div class="font-bold text-xl mb-2">{card.title}</div>
-      <p class="text-base">
-        {card.description}
-      </p>
+    <div class="font-bold text-xl mb-2">{card.title}</div>
+    <p class="text-base">
+      {card.description}
+    </p>
 
-      <div class="relative p-3">
-        <div class="flex justify-center space-x-2">
-          {#each card.platforms as platform}
-            <img
-              src={"icons/" + platform.toLowerCase() + ".png"}
-              class="w-6 h-5"
-              alt={platform}
-            />
-          {/each}
-        </div>
+    <div class="relative p-3">
+      <div class="flex justify-center space-x-2">
+        {#each card.platforms as platform}
+          <img
+            src={"icons/" + platform.toLowerCase() + ".png"}
+            class="w-6 h-5"
+            alt={platform}
+          />
+        {/each}
       </div>
     </div>
   </div>

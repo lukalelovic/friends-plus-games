@@ -30,14 +30,18 @@
   <Navbar />
   <div class="flex flex-col items-center">
     {#if featuredCard}
-      <div class="p-3">
-      <FeaturedCard card={featuredCard} />
+      <div class="p-5">
+        <FeaturedCard card={featuredCard} />
       </div>
     {/if}
-      
-  <div class="flex flex-wrap justify-center p-3 space-y-2 sm:space-y-0 sm:space-x-2">
+
+    <div
+      class="flex flex-wrap justify-center p-3 space-y-2 sm:space-y-0 sm:space-x-2"
+    >
       {#each cards as card}
-        <GameCard {card} />
+        {#if card && featuredCard && card.title != featuredCard.title}
+          <GameCard {card} />
+        {/if}
       {/each}
     </div>
   </div>
