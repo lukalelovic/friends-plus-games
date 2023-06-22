@@ -280,7 +280,7 @@
     </div>
 
     <div class="relative flex justify-center">
-      <img class="absolute object-cover bottom-0 z-10 h-96 w-auto" src="/game-imgs/mafia-bg-long.png" alt="">
+      <img class="absolute object-cover bottom-0 z-10 h-96 w-auto" src="/games/game-bg/mafia-bg-long.png" alt="">
     </div>
   </div>
 </div>

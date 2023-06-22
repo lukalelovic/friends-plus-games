@@ -13,4 +13,10 @@ export class GameService {
   async findAll(): Promise<Game[]> {
     return this.gameRepository.find();
   }
+
+  async getFeatured(): Promise<Game> {
+    return await this.gameRepository.findOne({
+      where: { title: "The King's Feast" },
+    });
+  }
 }

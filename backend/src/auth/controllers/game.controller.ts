@@ -10,4 +10,9 @@ export class GameController {
   async findAllGames(): Promise<Game[]> {
     return this.gameService.findAll();
   }
+
+  @Get('featured')
+  async getFeaturedGame(): Promise<Game> {
+    return this.gameService.getFeatured();
+  }
 }

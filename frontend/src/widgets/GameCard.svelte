@@ -19,12 +19,20 @@
 <button
   on:click={handleClick}
   class="w-full max-w-sm rounded overflow-hidden shadow-lg bg-tertiary hover:shadow-2xl">
-  <img src={card.gameImage} alt="Game" class="w-full h-auto" />
+  <img src={'games/'+card.gameImage} alt="Game" class="w-full h-auto" />
   
   <div class="px-4 py-3 text-white">
     <div class="font-bold text-xl mb-2">{card.title}</div>
     <p class="text-base">
       {card.description}
     </p>
+
+    <div class="relative p-3">
+      <div class="absolute bottom-0 right-0 flex space-x-2">
+        {#each card.platforms as platform}
+          <img src={"icons/"+platform.toLowerCase()+".png"} class="w-6 h-5" alt={platform} />
+        {/each}
+      </div>
+    </div>
   </div>
 </button>

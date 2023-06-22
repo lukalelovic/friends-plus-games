@@ -17,6 +17,6 @@
       </div>
     </div>
 
-    <img src="mafia.png" alt="mafia" class="w-72 h-auto" />
+    <img src="games/mafia.png" alt="mafia" class="w-72 h-auto" />
   </div>
 </div>

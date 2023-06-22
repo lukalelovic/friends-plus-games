@@ -21,4 +21,7 @@ export class Game {
 
   @Column({ type: 'varchar', nullable: true })
   externalURL: string;
+
+  @Column('simple-array', { nullable: true })
+  platforms: string[];
 }
