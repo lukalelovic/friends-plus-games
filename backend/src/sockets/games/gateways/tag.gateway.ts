@@ -58,7 +58,7 @@ export class TagGateway implements OnGatewayInit {
     // Return lobby players to the socket
     this.server
       .to(lobbyId)
-      .emit('playerJoined', [...playerMap.values()], oldSockId);
+      .emit('playerJoined', [...playerMap.values()], oldSockId, socket.id);
     console.log(`Player ${socket.id} joined tag game ${lobbyId}`);
   }
 

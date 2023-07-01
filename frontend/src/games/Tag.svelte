@@ -22,6 +22,7 @@
   let socket;
 
   let playerCircles = {};
+  let playerText = {};
   let taggedId;
 
   onMount(() => {
@@ -52,10 +53,18 @@
     if (!socket) return;
 
     // Create new player shape
-    socket.on("playerJoined", (players, oldSockId) => {
+    socket.on("playerJoined", (players, oldSockId, newSockId) => {
       if (oldSockId in playerCircles) {
         playerCircles[oldSockId].destroy();
+        playerText[oldSockId].destroy();
+
+        // If old socket ID was tagged, set tagged ID to new one
+        if (taggedId == oldSockId) {
+          taggedId = newSockId
+        }
+
         delete playerCircles[oldSockId];
+        delete playerText[oldSockId];
       }
 
       players.forEach(player => {
@@ -71,8 +80,24 @@
           fill: fill,
         });
 
+        const txt = new Konva.Text({
+          x: circ.x(),
+          y: circ.y(),
+          text: player.name,
+          fontSize: 14,
+          fontFamily: 'Arial',
+          fill: 'white',
+          align: 'center',
+          width: circ.radius(),
+          height: circ.radius(),
+        });
+
+        txt.offset({ x: txt.width() / 2, y: txt.height() / 2 });
+
         layer.add(circ);
+        layer.add(txt);
         playerCircles[player.id] = circ;
+        playerText[player.id] = txt;
 
         // Initialize random x,y pos
         socket.emit("movePlayer", lobbyId, circ.x(), circ.y());
@@ -191,15 +216,22 @@
 
   function updateShape(id, x, y, fill) {
     const circ = playerCircles[id];
-    if (!circ) return;
+    const txt = playerText[id];
+    if (!circ || !txt) return;
 
     circ.setAttrs({
       fill: fill,
       x: x,
       y: y,
     });
+
+    txt.setAttrs({
+      x: x,
+      y: y,
+    });
     
     playerCircles[id] = circ;
+    playerText[id] = txt;
   }
 
   function getRandomPos(min, max) {
