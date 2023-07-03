@@ -176,7 +176,7 @@
 </div>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'); /* Give me a fun google font */
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
   .wackbox {
     background: linear-gradient(135deg, #ff4081, #00b0ff);; /* Background color */

@@ -5,3 +5,4 @@ export const LOBBY_PATH = '/api/lobby';
 export const TAG_PATH='/api/tag';
 export const MAFIA_PATH='/api/mafia';
 export const WACKBOX_PATH='/api/wackbox';
+export const DRAW_PATH='/api/draw';

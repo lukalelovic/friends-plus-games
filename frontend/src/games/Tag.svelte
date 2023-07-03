@@ -7,8 +7,11 @@
   import { PROD_SOCKET_URI, TAG_PATH } from "../config";
   import { Keyboard } from "./generic/Keyboard";
   import { joinGame } from "./generic/joinGame";
+  import { checkIsMobile } from "./generic/isMobile";
+  import Navbar from "../generic/Navbar.svelte";
 
   let lobbyId;
+  let isMobile = false;
 
   const WIDTH = 1280;
   const HEIGHT = 640;
@@ -32,10 +35,12 @@
     });
 
     // Connecte to the server
-    socket.on('connect', () => {
-      console.log('Connected to server');
+    socket.on("connect", () => {
+      console.log("Connected to server");
       lobbyId = joinGame(socket);
     });
+
+    isMobile = checkIsMobile();
   });
 
   function start(stage, layer) {
@@ -60,14 +65,14 @@
 
         // If old socket ID was tagged, set tagged ID to new one
         if (taggedId == oldSockId) {
-          taggedId = newSockId
+          taggedId = newSockId;
         }
 
         delete playerCircles[oldSockId];
         delete playerText[oldSockId];
       }
 
-      players.forEach(player => {
+      players.forEach((player) => {
         console.log(player);
         if (player.id in playerCircles) return;
 
@@ -85,9 +90,9 @@
           y: circ.y(),
           text: player.name,
           fontSize: 14,
-          fontFamily: 'Arial',
-          fill: 'white',
-          align: 'center',
+          fontFamily: "Arial",
+          fill: "white",
+          align: "center",
           width: circ.radius(),
           height: circ.radius(),
         });
@@ -144,9 +149,13 @@
     socket.on("playerLeft", (socketId) => {
       if (socketId in playerCircles) {
         const shape = playerCircles[socketId];
+        const txt = playerText[socketId];
 
         shape.remove();
         shape.destroy();
+
+        txt.remove();
+        txt.destroy();
       }
     });
   }
@@ -177,7 +186,7 @@
       // Down arrow
       yPos = yPos + MOVE_OFFSET;
     }
-    
+
     // Send position to server (if it changed)
     socket.emit("movePlayer", lobbyId, xPos, yPos);
 
@@ -229,7 +238,7 @@
       x: x,
       y: y,
     });
-    
+
     playerCircles[id] = circ;
     playerText[id] = txt;
   }
@@ -243,4 +252,16 @@
   });
 </script>
 
-<Game background="black" width={WIDTH} height={HEIGHT} {start} {update} />
+{#if isMobile}
+  <div class="min-h-screen flex flex-col">
+    <Navbar />
+
+    <div class="flex flex-col justify-center items-center">
+      <h1 class="mt-2 text-4xl text-white">
+        Game is not playable on mobile devices. Sorry :/
+      </h1>
+    </div>
+  </div>
+{:else}
+  <Game background="black" width={WIDTH} height={HEIGHT} {start} {update} />
+{/if}
