@@ -56,7 +56,7 @@ export class DrawGateway implements OnGatewayInit {
     // Return lobby players to the socket
     this.server
       .to(lobbyId)
-      .emit('playerJoined', [...playerMap.values()], oldSockId);
+      .emit('playerJoined', [...playerMap.values()], oldSockId, socket.id);
     console.log(`Player ${socket.id} joined draw something game ${lobbyId}`);
 
     // If starting countdown has not begun, initialize it
@@ -120,10 +120,10 @@ export class DrawGateway implements OnGatewayInit {
       return;
     }
 
-    if (currMsg == currGame.currWord()) {
+    if (currMsg === currGame.currWord()) {
       this.server.to(lobbyId).emit('correctGuess', socket.id);
     } else {
-      this.server.to(lobbyId).emit('playerGuess', currMsg);
+      this.server.to(lobbyId).emit('playerGuess', socket.id, currMsg);
     }
   }
 

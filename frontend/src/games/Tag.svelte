@@ -16,9 +16,8 @@
   const WIDTH = 1280;
   const HEIGHT = 640;
 
-  const MOVE_OFFSET = 50;
+  const MOVE_OFFSET = 10;
   const PLAYER_SIZE = 50;
-  let canMove = true;
 
   let keyboard = new Keyboard();
 
@@ -48,15 +47,11 @@
   }
 
   function update(stage, layer) {
-    updatePlayers(stage, layer);
-
     checkPlayerMovement();
     checkTagPlayer();
   }
 
-  function updatePlayers(stage, layer) {
-    if (!socket) return;
-
+  function subscribeToEvents(stage, layer) {
     // Create new player shape
     socket.on("playerJoined", (players, oldSockId, newSockId) => {
       if (oldSockId in playerCircles) {
@@ -161,8 +156,6 @@
   }
 
   function checkPlayerMovement() {
-    if (!canMove) return;
-
     const playerShape = playerCircles[socket.id];
     if (!playerShape) return;
 
@@ -188,12 +181,9 @@
     }
 
     // Send position to server (if it changed)
-    socket.emit("movePlayer", lobbyId, xPos, yPos);
-
-    canMove = false;
-    setTimeout(() => {
-      canMove = true;
-    }, 150);
+    if (xPos != playerShape.x() || yPos != playerShape.y()) {
+      socket.emit("movePlayer", lobbyId, xPos, yPos);
+    }
   }
 
   function checkTagPlayer() {
@@ -263,5 +253,6 @@
     </div>
   </div>
 {:else}
-  <Game background="black" width={WIDTH} height={HEIGHT} {start} {update} />
+  <Game background="black" width={WIDTH} height={HEIGHT} 
+    {start} {update} {socket} {subscribeToEvents} />
 {/if}

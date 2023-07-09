@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import GameWindow from "../generic/GameWindow.svelte";
   import Navbar from "../generic/Navbar.svelte";
-  import { ChatStack } from "./generic/chatStack";
   import { io } from "socket.io-client";
   import { DRAW_PATH, PROD_SOCKET_URI } from "../config";
   import { joinGame } from "./generic/joinGame";
@@ -15,26 +14,28 @@
   let isMobile = false;
   let isMouseDown = false;
 
-  let chats = new ChatStack();
+  let chats = [];
   let allowedColors = [];
 
   let players = {};
 
-  let isDrawer = false;
+  let isDrawer = true;
   let correctGuess = false;
   let showScores = false;
 
   let currDrawer = "";
   let timeLeft = 60;
-  let blankWord = "";
+  let blankWord = "___";
 
   let currShapes = [];
-  let subscribed = false;
 
   let currColor = 'black';
   let currMsg = "";
 
   onMount(() => {
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.scrollTop = chatContainer.scrollHeight - chatContainer.clientHeight;
+
     socket = io(PROD_SOCKET_URI, {
       path: DRAW_PATH,
       transports: ["websocket"],
@@ -61,12 +62,6 @@
   }
 
   function update(stage, layer) {
-    // initialize server socket subscriptions
-    if (socket && !subscribed) {
-      subscribeToEvents(stage, layer);
-      subscribed = true;
-    }
-
     // listen for mouse down
     if (isMouseDown) {
       let colorClicked = false;
@@ -95,10 +90,20 @@
   }
 
   function subscribeToEvents(stage, layer) {
-    socket.on("playerJoined", (currPlayers, oldSockId) => {
+    socket.on("playerJoined", (currPlayers, oldSockId, newSockId) => {
       if (oldSockId in players) {
         delete players[oldSockId];
+
+        if (currDrawer == oldSockId) {
+          if (newSockId == socket.id) {
+            currDrawer = 'You';
+          } else {
+            currDrawer = players[newSockId].name;
+          }
+        }
       }
+
+      console.log(currPlayers);
 
       currPlayers.forEach(player => {
         players[player.id] = {
@@ -138,15 +143,14 @@
       timeLeft = currCount;
     });
 
-    socket.on("playerGuess", (msg) => {
-      console.log(msg);
-      chats.push(msg);
+    socket.on("playerGuess", (playerId, msg) => {
+      chats = [...chats, players[playerId].name + ': ' + msg];
     });
 
     socket.on("correctGuess", (playerId) => {
       if (socket.id == playerId) correctGuess = true;
 
-      chats.push( (socket.id == playerId) ? 'You' : players[playerId].name + " correctly guessed the drawing!");
+      chats = [...chats, ((socket.id == playerId) ? 'You' : players[playerId].name) + " correctly guessed the drawing!"];
     });
 
     socket.on("playerScores", (drawPlayers) => {
@@ -161,14 +165,12 @@
     socket.on("playerDraw", (shapes) => {
       if (isDrawer) return;
 
-      console.log(shapes);
-
       shapes.forEach(shape => {
         const circ = new Konva.Circle({
           x: shape.x,
           y: shape.y,
           radius: 10,
-          fill: currColor
+          fill: shape.currColor
         });
 
         currShapes.push(circ);
@@ -250,7 +252,7 @@
 
       <div class="flex flex-wrap mt-4" on:mousedown={handleMouseDown} on:mouseup={handleMouseUp}>
         {#if blankWord == "" && isDrawer}
-          <div class="absolute bg-gray-800 p-0 mt-5 z-40">
+          <div class="absolute justify-center items-center bg-gray-800 p-0 mt-5 z-40">
             <div class="text-white border border-solid bg-gray-800 border-white p-4 w-96">
               <form on:submit={handleSetWord} class="flex flex-col">
                 <input type="text" placeholder="Enter word..." class="p-3 text-black" min="1" max="20" />
@@ -276,16 +278,19 @@
           height={480}
           {start}
           {update}
+          {socket}
+          {subscribeToEvents}
         />
 
         <div
-          class="w-full md:w-auto ml-0 md:ml-8 flex flex-col min-h-full border-4 border-gray-900"
+          class="w-full h-96 md:w-auto ml-0 md:ml-8 flex flex-col border-4 border-gray-900"
         >
           <div
-            class="flex flex-col bg-gray-800 p-4 h-96 overflow-y-scroll flex-1"
+            id="chat-container"
+            class="flex-1 bg-gray-800 p-4 overflow-y-scroll space-y-1"
           >
-            {#each chats.all() as chat}
-              <p class="p-1 bg-gray-700 rounded-md text-white">{chat}</p>
+            {#each chats as chat}
+              <p class="px-2 py-1 bg-gray-700 rounded-md text-white">{chat}</p>
             {/each}
           </div>
           <div class="flex border-t-4 border-gray-900">
@@ -319,6 +324,7 @@
     width: 12px;
     background-color: #202027;
   }
+
 
   ::-webkit-scrollbar-thumb {
     background-color: #888;

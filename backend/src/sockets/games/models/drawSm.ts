@@ -186,7 +186,9 @@ export class DrawSm {
   }
 
   public currDrawerId(): string {
-    return this.rounds[this.currentRound].drawerId;
+    return this.rounds[this.currentRound]
+      ? this.rounds[this.currentRound].drawerId
+      : null;
   }
 
   public currWord(): string {
