@@ -20,6 +20,14 @@
 
   let players = {};
 
+  let isDrawer = false;
+  let correctGuess = false;
+  let showScores = false;
+
+  let currDrawer = "";
+  let timeLeft = 60;
+  let blankWord = "";
+
   let currColor = 'black';
   let currMsg = "";
 
@@ -29,7 +37,6 @@
       transports: ["websocket"],
     });
 
-    // Connecte to the server
     socket.on("connect", () => {
       console.log("Connected to server");
       lobbyId = joinGame(socket);
@@ -63,12 +70,60 @@
       });
     });
 
-    socket.on('playerGuess', (msg) => {
+    socket.on("assignDrawer", (drawerId) => {
+      // reset variables
+      blankWord = "";
+      showScores = false;
+      isDrawer = false;
+      correctGuess = false;
+
+      // am I the current drawer?
+      if (socket.id == drawerId) {
+        isDrawer = true;
+        currDrawer = 'You';
+      } else {
+        currDrawer = players[drawerId].name;
+      }
+    });
+
+    socket.on("wordLength", (len) => {
+      blankWord = "_".repeat(len);
+    });
+
+    socket.on("roundCountdown", (currCount) => {
+      timeLeft = currCount;
+    });
+
+    socket.on("playerGuess", (msg) => {
       chats.push(msg);
     });
 
-    socket.on('correctGuess', (playerId) => {
+    socket.on("playerScores", (drawPlayers) => {
+      // TODO: set player scores for each player
+      Object.entries(drawPlayers).forEach(([playerId, player]) => {
+        players[playerId].score = player.points;
+      });
+
+      showScores = true;
+    });
+
+    socket.on("correctGuess", (playerId) => {
+      if (socket.id == playerId) correctGuess = true;
+
       chats.push( (socket.id == playerId) ? 'You' : players[playerId].name + " correctly guessed the drawing!");
+    });
+
+    socket.on("playerDraw", (x, y, color) => {
+      layer.add(new Konva.Circle({
+        x: x,
+        y: y,
+        radius: 10,
+        fill: color
+      }));
+    });
+
+    socket.on("playerLeft", (playerId) => {
+      delete players[playerId];
     });
   
     if (isMouseDown) {
@@ -81,13 +136,10 @@
         }
       });
 
-      if (!colorClicked) {
-        layer.add(new Konva.Circle({
-          x: stage.getPointerPosition().x,
-          y: stage.getPointerPosition().y,
-          radius: 10,
-          fill: currColor
-        }));
+      if (!colorClicked && isDrawer) {
+        socket.emit("draw", lobbyId,
+          stage.getPointerPosition().x, stage.getPointerPosition().y, 
+          currColor);
       }
     }
   }
@@ -104,6 +156,16 @@
     return colorRect;
   }
 
+  function handleSetWord(e) {
+    e.preventDefault();
+
+    if (!isDrawer || blankWord != "") {
+      return;
+    }
+
+    socket.emit('setWord', lobbyId, e.target[0].value);
+  }
+
   function handleKeyDown(e) {
     if (e.key === "Enter") {
       handleSendChat();
@@ -115,6 +177,8 @@
   }
 
   function handleSendChat() {
+    if (isDrawer || correctGuess) return;
+
     socket.emit("guessDrawing", lobbyId, currMsg);
     currMsg = "";
   }
@@ -140,8 +204,35 @@
   {:else}
     <div class="flex flex-col justify-center items-center">
       <h1 class="mt-2 text-4xl text-white">Draw Something!</h1>
+      
+      {#if currDrawer != ""}
+        <p class="mt-2 text-lg text-white">{currDrawer} {(currDrawer == 'You') ? 'are' : 'is'} drawing!</p>
+        <p class="my-2 text-xl text-white">{(blankWord.length > 0) ? blankWord : 'Waiting on '+currDrawer+'...'}</p>
+        <p class="mt-1 text-md text-white">{timeLeft} seconds</p>
+      {/if}
 
       <div class="flex flex-wrap mt-4" on:mousedown={handleMouseDown} on:mouseup={handleMouseUp}>
+        {#if blankWord == "" && isDrawer}
+          <div class="absolute bg-gray-800 p-0 mt-5 z-40">
+            <div class="text-white border border-solid bg-gray-800 border-white p-4 w-96">
+              <form on:submit={handleSetWord} class="flex flex-col">
+                <input type="text" placeholder="Enter word..." class="p-3 text-black" min="1" max="20" />
+                <button type="submit" class="p-3 bg-white text-gray-800">Submit</button>
+              </form>
+            </div>
+          </div>
+        {/if}
+
+        {#if showScores}
+          <div class="absolute bg-gray-800 p-0 mt-5 z-40">
+            <div class="text-white border border-solid border-white p-4 w-96">
+              {#each players.values() as player}
+                <p class="text-md p-2 bg-gray-600">{player.name}: {player.score}</p>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
         <GameWindow
           background="white"
           width={640}

@@ -71,6 +71,9 @@
         minSize = 3;
         maxSize = 15;
         break;
+      case "draw-something":
+        minSize = 2;
+        maxSize = 10;
       default:
         minSize = 1;
         maxSize = 20;
