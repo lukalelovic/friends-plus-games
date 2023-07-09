@@ -28,6 +28,9 @@
   let timeLeft = 60;
   let blankWord = "";
 
+  let currShapes = [];
+  let subscribed = false;
+
   let currColor = 'black';
   let currMsg = "";
 
@@ -58,6 +61,40 @@
   }
 
   function update(stage, layer) {
+    // initialize server socket subscriptions
+    if (socket && !subscribed) {
+      subscribeToEvents(stage, layer);
+      subscribed = true;
+    }
+
+    // listen for mouse down
+    if (isMouseDown) {
+      let colorClicked = false;
+
+      allowedColors.forEach((color) => {
+        if (color.intersects(stage.getPointerPosition())) {
+          currColor = color.fill();
+          colorClicked = true;
+        }
+      });
+
+      if (!colorClicked && isDrawer && blankWord.length > 0) {
+        const x = stage.getPointerPosition().x;
+        const y = stage.getPointerPosition().y;
+
+        layer.add(new Konva.Circle({
+          x: x,
+          y: y,
+          radius: 10,
+          fill: currColor
+        }));
+
+        socket.emit("draw", lobbyId, x, y, currColor);
+      }
+    }
+  }
+
+  function subscribeToEvents(stage, layer) {
     socket.on("playerJoined", (currPlayers, oldSockId) => {
       if (oldSockId in players) {
         delete players[oldSockId];
@@ -70,12 +107,19 @@
       });
     });
 
-    socket.on("assignDrawer", (drawerId) => {
+    socket.on("assignDrawer", (drawerId) => {      
       // reset variables
       blankWord = "";
       showScores = false;
       isDrawer = false;
       correctGuess = false;
+
+      currShapes.forEach((shape) => {
+        shape.remove();
+        shape.destroy();
+      });
+
+      currShapes.length = 0;
 
       // am I the current drawer?
       if (socket.id == drawerId) {
@@ -95,7 +139,14 @@
     });
 
     socket.on("playerGuess", (msg) => {
+      console.log(msg);
       chats.push(msg);
+    });
+
+    socket.on("correctGuess", (playerId) => {
+      if (socket.id == playerId) correctGuess = true;
+
+      chats.push( (socket.id == playerId) ? 'You' : players[playerId].name + " correctly guessed the drawing!");
     });
 
     socket.on("playerScores", (drawPlayers) => {
@@ -107,41 +158,27 @@
       showScores = true;
     });
 
-    socket.on("correctGuess", (playerId) => {
-      if (socket.id == playerId) correctGuess = true;
+    socket.on("playerDraw", (shapes) => {
+      if (isDrawer) return;
 
-      chats.push( (socket.id == playerId) ? 'You' : players[playerId].name + " correctly guessed the drawing!");
-    });
+      console.log(shapes);
 
-    socket.on("playerDraw", (x, y, color) => {
-      layer.add(new Konva.Circle({
-        x: x,
-        y: y,
-        radius: 10,
-        fill: color
-      }));
+      shapes.forEach(shape => {
+        const circ = new Konva.Circle({
+          x: shape.x,
+          y: shape.y,
+          radius: 10,
+          fill: currColor
+        });
+
+        currShapes.push(circ);
+        layer.add(circ);
+      });
     });
 
     socket.on("playerLeft", (playerId) => {
       delete players[playerId];
     });
-  
-    if (isMouseDown) {
-      let colorClicked = false;
-
-      allowedColors.forEach((color) => {
-        if (color.intersects(stage.getPointerPosition())) {
-          currColor = color.fill();
-          colorClicked = true;
-        }
-      });
-
-      if (!colorClicked && isDrawer) {
-        socket.emit("draw", lobbyId,
-          stage.getPointerPosition().x, stage.getPointerPosition().y, 
-          currColor);
-      }
-    }
   }
 
   function selectionColor(x, y, color) {

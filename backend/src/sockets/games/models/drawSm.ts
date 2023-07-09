@@ -12,11 +12,19 @@ interface DrawRound {
   drawerId: string;
 }
 
+interface DrawShape {
+  x: number;
+  y: number;
+  currColor: string;
+}
+
 export class DrawSm {
   private lobbyId: string;
 
   private players: { [playerId: string]: DrawPlayer };
   private rounds: DrawRound[];
+
+  private shapeBuffer: DrawShape[];
 
   private currentRound: number;
 
@@ -28,11 +36,16 @@ export class DrawSm {
 
     this.currentRound = 0;
     this.rounds = [];
+
+    this.shapeBuffer = [];
   }
 
   public async gameLoop(server: Server): Promise<void> {
     // Repeat rounds for n players (so every player gets a turn)
     while (this.currentRound < this.numPlayers()) {
+      // Wait 5 seconds
+      await this.scoreLoop();
+
       // initialize round & assign drawer
       this.rounds[this.currentRound] = {
         word: null,
@@ -47,17 +60,17 @@ export class DrawSm {
       // Wait for drawer word
       await this.waitForWord();
 
-      // Drwa countdown
+      // Draw countdown
       await this.drawLoop(server);
 
       // Calculate scores
       this.calculateScores(server);
 
-      // Show scores (wait 5 seconds)
-      await this.scoreLoop(server);
-
       this.currentRound++;
     }
+
+    // Wait a final 5 seconds
+    await this.scoreLoop();
   }
 
   public addPlayer(playerId: string): void {
@@ -74,6 +87,22 @@ export class DrawSm {
 
   public removePlayer(playerId: string): void {
     delete this.players[playerId];
+  }
+
+  private processShapes(server: Server): void {
+    if (this.shapeBuffer.length === 0) {
+      return;
+    }
+
+    const shapeUpdates = [...this.shapeBuffer]; // Copy shape updates to list
+    this.shapeBuffer = []; // Clear buffer
+
+    // Emit new shapes
+    server.to(this.lobbyId).emit('playerDraw', shapeUpdates);
+  }
+
+  public addShape(shape: DrawShape): void {
+    this.shapeBuffer.push(shape);
   }
 
   public setCurrentWord(currWord: string): void {
@@ -93,6 +122,10 @@ export class DrawSm {
   }
 
   private drawLoop(server: Server): Promise<number> {
+    const shapeUpdateInterval = setInterval(() => {
+      this.processShapes(server);
+    }, 150);
+
     return new Promise<number>((resolve) => {
       let drawWait = 60;
 
@@ -103,6 +136,8 @@ export class DrawSm {
             Object.keys(this.players).length
         ) {
           clearInterval(waitInterval);
+          clearInterval(shapeUpdateInterval);
+
           resolve(0);
           return;
         }
@@ -128,29 +163,26 @@ export class DrawSm {
     server.to(this.lobbyId).emit('playerScores', this.players);
   }
 
-  private scoreLoop(server: Server): Promise<number> {
+  private scoreLoop(): Promise<number> {
     return new Promise<number>((resolve) => {
       let scoreWait = 5;
 
       const waitInterval = setInterval(() => {
-        if (
-          scoreWait <= 0 ||
-          this.rounds[this.currentRound].numCorrect ==
-            Object.keys(this.players).length
-        ) {
+        if (scoreWait <= 0) {
           clearInterval(waitInterval);
           resolve(0);
           return;
         }
 
-        server.to(this.lobbyId).emit('roundCountdown', scoreWait);
         scoreWait--;
       }, this.SEC_INTERVAL);
     });
   }
 
-  public changeDrawerId(playerId): void {
+  public changeDrawerId(server: Server, playerId: string): void {
     this.rounds[this.currentRound].drawerId = playerId;
+
+    server.to(this.lobbyId).emit('assignDrawer', playerId);
   }
 
   public currDrawerId(): string {

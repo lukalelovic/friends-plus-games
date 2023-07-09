@@ -72,7 +72,7 @@ export class DrawGateway implements OnGatewayInit {
     // Old id joined game? Remove it
     if (this.gameMap.get(lobbyId).getPlayers()[oldSockId]) {
       if (oldSockId == this.gameMap.get(lobbyId).currDrawerId()) {
-        this.gameMap.get(lobbyId).changeDrawerId(socket.id);
+        this.gameMap.get(lobbyId).changeDrawerId(this.server, socket.id);
       }
 
       this.gameMap.get(lobbyId).removePlayer(oldSockId);
@@ -104,7 +104,8 @@ export class DrawGateway implements OnGatewayInit {
       return;
     }
 
-    this.server.to(lobbyId).emit('playerDraw', xPos, yPos, color);
+    // Add shape to shape buffer
+    this.gameMap.get(lobbyId).addShape({ x: xPos, y: yPos, currColor: color });
   }
 
   @SubscribeMessage('guessDrawing')
