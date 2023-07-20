@@ -19,13 +19,13 @@
 
   let players = {};
 
-  let isDrawer = true;
+  let isDrawer = false;
   let correctGuess = false;
   let showScores = false;
 
   let currDrawer = "";
   let timeLeft = 60;
-  let blankWord = "___";
+  let blankWord = "";
 
   let currShapes = [];
 
@@ -77,12 +77,15 @@
         const x = stage.getPointerPosition().x;
         const y = stage.getPointerPosition().y;
 
-        layer.add(new Konva.Circle({
+        const circ = new Konva.Circle({
           x: x,
           y: y,
           radius: 10,
           fill: currColor
-        }));
+        });
+
+        layer.add(circ);
+        currShapes.push(circ);
 
         socket.emit("draw", lobbyId, x, y, currColor);
       }
@@ -116,15 +119,6 @@
       // reset variables
       blankWord = "";
       showScores = false;
-      isDrawer = false;
-      correctGuess = false;
-
-      currShapes.forEach((shape) => {
-        shape.remove();
-        shape.destroy();
-      });
-
-      currShapes.length = 0;
 
       // am I the current drawer?
       if (socket.id == drawerId) {
@@ -153,13 +147,24 @@
       chats = [...chats, ((socket.id == playerId) ? 'You' : players[playerId].name) + " correctly guessed the drawing!"];
     });
 
-    socket.on("playerScores", (drawPlayers) => {
+    socket.on("playerScores", (drawPlayers, currWord) => {
       // TODO: set player scores for each player
       Object.entries(drawPlayers).forEach(([playerId, player]) => {
         players[playerId].score = player.points;
       });
 
       showScores = true;
+      blankWord = currWord;
+
+      isDrawer = false;
+      correctGuess = false;
+
+      currShapes.forEach((shape) => {
+        shape.remove();
+        shape.destroy();
+      });
+
+      currShapes.length = 0;
     });
 
     socket.on("playerDraw", (shapes) => {
@@ -250,28 +255,32 @@
         <p class="mt-1 text-md text-white">{timeLeft} seconds</p>
       {/if}
 
+      {#if blankWord == "" && isDrawer}
+        <div class="absolute z-40">
+          <div class="text-white bg-gray-800 p-4 w-96 border-4 border-gray-900">
+            <h3 class="text-center">You are the Drawer!</h3>
+            <form on:submit={handleSetWord} class="flex flex-col space-y-2">
+              <input type="text" placeholder="Enter word..." class="p-3 bg-gray-800 border 
+                  border-gray-500 focus:border-gray-400 focus:outline-none" min="1" max="20" />
+              
+              <button type="submit" class="p-3 bg-gray-600 hover:bg-gray-700 text-white">Submit</button>
+            </form>
+          </div>
+        </div>
+      {/if}
+
+      {#if showScores}
+        <div class="absolute z-40 text-white bg-gray-800 p-0 mt-5">
+          <h1 class="text-lg text-center">Scores</h1>
+          <div class="p-4 w-96">
+            {#each Object.values(players) as player}
+              <p class="text-md p-2 bg-gray-600">{player.name}: {player.score}</p>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <div class="flex flex-wrap mt-4" on:mousedown={handleMouseDown} on:mouseup={handleMouseUp}>
-        {#if blankWord == "" && isDrawer}
-          <div class="absolute justify-center items-center bg-gray-800 p-0 mt-5 z-40">
-            <div class="text-white border border-solid bg-gray-800 border-white p-4 w-96">
-              <form on:submit={handleSetWord} class="flex flex-col">
-                <input type="text" placeholder="Enter word..." class="p-3 text-black" min="1" max="20" />
-                <button type="submit" class="p-3 bg-white text-gray-800">Submit</button>
-              </form>
-            </div>
-          </div>
-        {/if}
-
-        {#if showScores}
-          <div class="absolute bg-gray-800 p-0 mt-5 z-40">
-            <div class="text-white border border-solid border-white p-4 w-96">
-              {#each players.values() as player}
-                <p class="text-md p-2 bg-gray-600">{player.name}: {player.score}</p>
-              {/each}
-            </div>
-          </div>
-        {/if}
-
         <GameWindow
           background="white"
           width={640}
@@ -290,7 +299,7 @@
             class="flex-1 bg-gray-800 p-4 overflow-y-scroll space-y-1"
           >
             {#each chats as chat}
-              <p class="px-2 py-1 bg-gray-700 rounded-md text-white">{chat}</p>
+              <p class="px-2 py-1 bg-gray-700 rounded-md text-white whitespace-normal w-60">{chat}</p>
             {/each}
           </div>
           <div class="flex border-t-4 border-gray-900">

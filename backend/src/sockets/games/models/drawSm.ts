@@ -133,7 +133,7 @@ export class DrawSm {
         if (
           drawWait <= 0 ||
           this.rounds[this.currentRound].numCorrect ==
-            Object.keys(this.players).length
+            Object.keys(this.players).length - 1
         ) {
           clearInterval(waitInterval);
           clearInterval(shapeUpdateInterval);
@@ -160,7 +160,9 @@ export class DrawSm {
       }
     });
 
-    server.to(this.lobbyId).emit('playerScores', this.players);
+    server
+      .to(this.lobbyId)
+      .emit('playerScores', this.players, this.rounds[this.currentRound].word);
   }
 
   private scoreLoop(): Promise<number> {
@@ -201,5 +203,9 @@ export class DrawSm {
 
   private playerList(): string[] {
     return Object.keys(this.players);
+  }
+
+  public incNumCorrect(): void {
+    this.rounds[this.currentRound].numCorrect++;
   }
 }

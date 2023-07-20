@@ -122,6 +122,7 @@ export class DrawGateway implements OnGatewayInit {
 
     if (currMsg === currGame.currWord()) {
       this.server.to(lobbyId).emit('correctGuess', socket.id);
+      this.gameMap.get(lobbyId).incNumCorrect();
     } else {
       this.server.to(lobbyId).emit('playerGuess', socket.id, currMsg);
     }
