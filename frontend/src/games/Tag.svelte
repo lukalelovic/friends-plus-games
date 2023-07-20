@@ -16,8 +16,9 @@
   const WIDTH = 1280;
   const HEIGHT = 640;
 
-  const MOVE_OFFSET = 10;
+  const MOVE_OFFSET = 25;
   const PLAYER_SIZE = 50;
+  let canMove = true;
 
   let keyboard = new Keyboard();
 
@@ -156,6 +157,8 @@
   }
 
   function checkPlayerMovement() {
+    if (!canMove) return;
+
     const playerShape = playerCircles[socket.id];
     if (!playerShape) return;
 
@@ -184,6 +187,11 @@
     if (xPos != playerShape.x() || yPos != playerShape.y()) {
       socket.emit("movePlayer", lobbyId, xPos, yPos);
     }
+
+    canMove = false;
+    setTimeout(() => {
+      canMove = true;
+    }, 75);
   }
 
   function checkTagPlayer() {
