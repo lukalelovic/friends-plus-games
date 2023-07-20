@@ -11,6 +11,11 @@
     export let start;
     export let update;
 
+    export let socket;
+    export let subscribeToEvents;
+
+    let subscribed = false;
+
     onMount(() => {
         // create a new stage and layer
         stage = new Konva.Stage({
@@ -44,6 +49,14 @@
         // Start update loop
         if (typeof update === "function") {
             requestAnimationFrame(function gameLoop() {
+                if (socket && !subscribed) {
+                  if (typeof subscribeToEvents === "function") {
+                    subscribeToEvents(stage, layer);
+                  }
+
+                  subscribed = true;
+                }
+
                 update(stage, layer);
                 
                 // Redraw the layer

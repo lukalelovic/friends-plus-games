@@ -77,7 +77,7 @@ export class TagGateway implements OnGatewayInit {
 
     // Update the player's position in the players map
     let player: Player = playerMap.get(playerId);
-    if (player) {
+    if (player && (x != player.x || y != player.y)) {
       player.x = x;
       player.y = y;
     } else {

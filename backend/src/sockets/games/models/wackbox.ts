@@ -184,7 +184,9 @@ export class Wackbox {
           1000 * ((votes + 1) / Object.keys(this.players).length);
 
         this.players[playerId].score += roundScore;
-        server.emit('scoreUpdate', playerId, this.players[playerId].score);
+        server
+          .to(this.lobbyId)
+          .emit('scoreUpdate', playerId, this.players[playerId].score);
       }
     });
   }

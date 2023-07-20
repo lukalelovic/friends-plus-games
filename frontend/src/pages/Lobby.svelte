@@ -9,7 +9,7 @@
   import { LOBBY_PATH, PROD_SOCKET_URI } from "../config";
 
   const urlParams = window.location.pathname.substring(1);
-  const gameTitle = decodeURI(
+  let gameTitle = decodeURI(
     urlParams.substring(urlParams.indexOf("/") + 1, urlParams.lastIndexOf("/"))
   );
   const lobbyId = urlParams.substring(urlParams.lastIndexOf("/") + 1);
@@ -23,6 +23,10 @@
 
   const gameUrl =
     gameTitle == "The King's Feast" ? "mafia" : gameTitle.toLowerCase();
+
+  if (gameTitle == "draw-something") {
+    gameTitle = "Draw Something";
+  }
 
   onMount(() => {
     // Connect to the Socket.io endpoint on the backend
@@ -71,8 +75,11 @@
         minSize = 3;
         maxSize = 15;
         break;
+      case "draw-something":
+        minSize = 2;
+        maxSize = 10;
       default:
-        minSize = 1;
+        minSize = 2;
         maxSize = 20;
         break;
     }
