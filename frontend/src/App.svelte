@@ -24,5 +24,5 @@
   <Route path="/game/tag/*" component={Tag} />
   <Route path="/game/mafia/*" component={Mafia} />
   <Route path="/game/wackbox/*" component={Wackbox} />
-  <Route path="/game/draw-something/*" component={Draw} />
+  <Route path="/game/draw%20something/*" component={Draw} />
 </Router>

@@ -21,15 +21,13 @@
   let maxSize = 0;
   let minSize = 0;
 
-  const gameUrl =
-    gameTitle == "The King's Feast" ? "mafia" : gameTitle.toLowerCase();
+  let gameUrl = gameTitle == "The King's Feast" ? "mafia" : gameTitle.toLowerCase();
 
   if (gameTitle == "draw-something") {
     gameTitle = "Draw Something";
   }
 
   onMount(() => {
-    // Connect to the Socket.io endpoint on the backend
     socket = io(PROD_SOCKET_URI, {
       path: LOBBY_PATH,
       transports: ["websocket"],

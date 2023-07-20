@@ -138,6 +138,7 @@ export class DrawSm {
           clearInterval(waitInterval);
           clearInterval(shapeUpdateInterval);
 
+          drawWait = 60;
           resolve(0);
           return;
         }
