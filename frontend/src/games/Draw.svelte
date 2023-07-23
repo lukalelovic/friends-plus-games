@@ -22,6 +22,7 @@
   let isDrawer = false;
   let correctGuess = false;
   let showScores = false;
+  let gameOver = false;
 
   let currDrawer = "";
   let timeLeft = 60;
@@ -183,6 +184,10 @@
       });
     });
 
+    socket.on('gameOver', () => {
+      gameOver = true;
+    });
+
     socket.on("playerLeft", (playerId) => {
       delete players[playerId];
     });
@@ -249,7 +254,9 @@
     <div class="flex flex-col justify-center items-center">
       <h1 class="mt-2 text-4xl text-white">Draw Something!</h1>
       
-      {#if currDrawer != ""}
+      {#if gameOver}
+        <p class="my-2 text-xl text-white">Game Over!</p>
+      {:else if currDrawer != ""}
         <p class="mt-2 text-lg text-white">{currDrawer} {(currDrawer == 'You') ? 'are' : 'is'} drawing!</p>
         <p class="my-2 text-xl text-white">{(blankWord.length > 0) ? blankWord : 'Waiting on '+currDrawer+'...'}</p>
         <p class="mt-1 text-md text-white">{timeLeft} seconds</p>

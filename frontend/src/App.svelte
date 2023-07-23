@@ -10,6 +10,7 @@
   import Profile from "./pages/Profile.svelte";
   import Wackbox from "./games/Wackbox.svelte";
   import Draw from "./games/Draw.svelte";
+  import Terms from "./forms/Terms.svelte";
 </script>
 
 <Router>
@@ -19,6 +20,7 @@
   <Route path="/lobby/*" component={Lobby} />
   <Route path="/about" component={About} />
   <Route path="/profile" component={Profile} />
+  <Route package="/terms" component={Terms} />
 
   <!-- Game Routes -->
   <Route path="/game/tag/*" component={Tag} />

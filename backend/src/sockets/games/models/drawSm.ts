@@ -69,6 +69,8 @@ export class DrawSm {
       this.currentRound++;
     }
 
+    server.to(this.lobbyId).emit('gameOver');
+
     // Wait a final 5 seconds
     await this.scoreLoop();
   }
