@@ -4,7 +4,7 @@
   import { navigate } from "svelte-routing";
   import UserForm from "../forms/UserForm.svelte";
   import StandardFormInput from "../generic/StandardFormInput.svelte";
-    import FormButton from "../generic/FormButton.svelte";
+  import FormButton from "../generic/FormButton.svelte";
 
   let username = "";
   let password = "";
@@ -36,7 +36,7 @@
   <div class="flex flex-col space-y-2">
     <a
       class="inline-block align-baseline font-bold text-quaternary hover:text-indigo-500"
-      href="#"
+      href="/forgot-password"
     >
       Forgot Password?
     </a>

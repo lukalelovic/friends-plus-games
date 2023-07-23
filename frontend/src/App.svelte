@@ -11,6 +11,7 @@
   import Wackbox from "./games/Wackbox.svelte";
   import Draw from "./games/Draw.svelte";
   import Terms from "./forms/Terms.svelte";
+  import Forgot from "./pages/Forgot.svelte";
 </script>
 
 <Router>
@@ -21,6 +22,7 @@
   <Route path="/about" component={About} />
   <Route path="/profile" component={Profile} />
   <Route package="/terms" component={Terms} />
+  <Route path="/forgot-password" component={Forgot} />
 
   <!-- Game Routes -->
   <Route path="/game/tag/*" component={Tag} />
